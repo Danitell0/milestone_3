@@ -10,6 +10,9 @@ def anagram(s1: str, s2: str) -> bool:
             return False
     return True
 
+def new_anagram(s1: str, s2: str) -> bool:
+    return sorted(s1.replace(" ", "")) == sorted(s2.replace(" ", ""))
+
 print(anagram("listen", "silent"))
 print(anagram("Dormitory", "Dirty Room"))
 print(anagram("hello", "world"))
