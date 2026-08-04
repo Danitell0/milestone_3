@@ -3,6 +3,7 @@
 # Run from the project root:  bash check_loader.sh
  
 echo "=== 1. normal run (expect: two counts, exit 0) ==="
+cd ..
 uv run python -m src ; echo "exit: $?"
 echo
  

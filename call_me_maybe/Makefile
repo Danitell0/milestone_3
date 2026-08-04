@@ -45,7 +45,7 @@ help:
 
 install:
 	$(UV) sync
-	
+ 
 run: | $(DATA_OUT)
 	@echo "Running main program"
 	@$(PY) -m $(SRC) $(STD_ARGS) $(ARGS)
@@ -55,13 +55,13 @@ debug: | $(DATA_OUT)
 	@$(PY) -m pdb -m $(SRC) $(STD_ARGS) $(ARGS)
 
 lint:
-	@$(UV) run flake8 .
+	@$(UV) run flake8 --exclude=llm_sdk,venv,.venv
 	@echo "flake8... ${GREEN}Success${RESET}"
 	@$(UV) run mypy . $(MYPY_FLAGS)
 	@echo "mypy... ${GREEN}Success${RESET}"
 
 lint-strict:
-	@$(UV) run flake8 .
+	@$(UV) run flake8 --exclude=llm_sdk,venv,.venv
 	@echo "flake8... ${GREEN}Success${RESET}"
 	@$(UV) run mypy . --strict
 	@echo "mypy --strict... ${GREEN}Success${RESET}"
