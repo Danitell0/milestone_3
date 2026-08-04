@@ -3,5 +3,9 @@
 links:
 Argparse Tutorial = "https://docs.python.org/3/howto/argparse.html"
 
+TODO:
+    parse known arguments
+
+
 help commands:
     watch -n 5 flake8

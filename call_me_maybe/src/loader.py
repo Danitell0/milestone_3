@@ -24,11 +24,13 @@ def _load_json(path: Path) -> Any:
 
 
 def load_prompts(path: Path) -> list[TestPrompt]:
-    raw = _load_json(path)
     try:
+        raw = _load_json(path)
         result: list[TestPrompt] = TypeAdapter(
                 list[TestPrompt]).validate_python(raw)
         return result
+    except CallMeMaybeError as e:
+        raise CallMeMaybeError(e)
     except ValidationError as e:
         first = e.errors()[0]
         where = " -> ".join(str(x) for x in first["loc"])
@@ -36,11 +38,13 @@ def load_prompts(path: Path) -> list[TestPrompt]:
 
 
 def load_functions(path: Path) -> list[FunctionSpec]:
-    raw = _load_json(path)
     try:
+        raw = _load_json(path)
         result: list[FunctionSpec] = TypeAdapter(
                 list[FunctionSpec]).validate_python(raw)
         return result
+    except CallMeMaybeError as e:
+        raise CallMeMaybeError(e)
     except ValidationError as e:
         first = e.errors()[0]
         where = " -> ".join(str(x) for x in first['loc'])

@@ -11,8 +11,8 @@ DATA_IN  	:= data/input
 DATA_OUT 	:= data/output
 
 FUNCTIONS	:= $(DATA_IN)/functions_definition.json
-INPUT		:= $(DATA_IN)/functions_calling_tests.json
-OUTPUT		:= $(DATA_OUT)/functions_calling_results.json
+INPUT		:= $(DATA_IN)/function_calling_tests.json
+OUTPUT		:= $(DATA_OUT)/function_calling_results.json
 
 # Tools --------------------
 UV 		:= uv
@@ -25,7 +25,6 @@ MYPY_FLAGS	:= --warn-return-any \
 STD_ARGS	:= --functions_definition $(FUNCTIONS) \
 		   --input $(INPUT) \
 		   --output $(OUTPUT)
-ARGS		?=
 
 .PHONY: help install run debug lint lint-strict test clean fclean
 
@@ -48,11 +47,11 @@ install:
  
 run: | $(DATA_OUT)
 	@echo "Running main program"
-	@$(PY) -m $(SRC) $(STD_ARGS) $(ARGS)
+	@$(PY) -m $(SRC) $(STD_ARGS)
 
 debug: | $(DATA_OUT)
 	@echo "Running main program with debugger"
-	@$(PY) -m pdb -m $(SRC) $(STD_ARGS) $(ARGS)
+	@$(PY) -m pdb -m $(SRC) $(STD_ARGS)
 
 lint:
 	@$(UV) run flake8 --exclude=llm_sdk,venv,.venv
