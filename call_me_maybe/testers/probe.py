@@ -2,32 +2,25 @@
 
 import time
 from llm_sdk import Small_LLM_Model
+from src.prompt import build_prompt
+from pathlib import Path
+from src.loader import load_prompts, load_functions
+
 
 potato = Small_LLM_Model()
+prompts = load_prompts(Path("data/input/function_calling_tests.json"))
+functions = load_functions(Path("data/input/functions_definition.json"))
 
-reverse_string = potato.encode("fn_reverse_string")[0].tolist()
-for i in reverse_string:
-    print(i, repr(potato.decode(i)))
+text = build_prompt(prompts[0].prompt, functions)
+print(text)
+print("---")
 
-add_numbers = potato.encode("fn_add_numbers")[0].tolist()
-for i in add_numbers:
-    print(i, repr(potato.decode(i)))
+ids = potato.encode(text)[0].tolist()
+print(len(ids), "tokens")
+print("first 5 ids:", ids[:5])
 
-greet = potato.encode("fn_greet")[0].tolist()
-for i in greet:
-    print(i, repr(potato.decode(i)))
+print("----")
 
-square_root = potato.encode("fn_get_square_root")[0].tolist()
-for i in square_root:
-    print(i, repr(potato.decode(i)))
-
-regex = potato.encode("fn_substitute_string_with_regex")[0].tolist()
-for i in regex:
-    print(i, repr(potato.decode(i)))
-
-for i in ["<|im_end|>", "<think>", "</think>", "<|endoftext|>"]:
-    print(repr(i), potato.encode(i)[0].tolist())
-
-t = time.perf_counter()
-logits = potato.get_logits_from_input_ids(reverse_string)
-print(len(logits), (time.perf_counter() - t) * 1000, "ms")
+logits = potato.get_logits_from_input_ids(ids)
+best = max(range(len(logits)), key=lambda i: logits[i])
+print("model wants:", repr(potato.decode([best])), best)

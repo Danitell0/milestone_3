@@ -29,8 +29,6 @@ def load_prompts(path: Path) -> list[TestPrompt]:
         result: list[TestPrompt] = TypeAdapter(
                 list[TestPrompt]).validate_python(raw)
         return result
-    except CallMeMaybeError as e:
-        raise CallMeMaybeError(e)
     except ValidationError as e:
         first = e.errors()[0]
         where = " -> ".join(str(x) for x in first["loc"])
@@ -43,8 +41,6 @@ def load_functions(path: Path) -> list[FunctionSpec]:
         result: list[FunctionSpec] = TypeAdapter(
                 list[FunctionSpec]).validate_python(raw)
         return result
-    except CallMeMaybeError as e:
-        raise CallMeMaybeError(e)
     except ValidationError as e:
         first = e.errors()[0]
         where = " -> ".join(str(x) for x in first['loc'])

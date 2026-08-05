@@ -12,9 +12,10 @@ dependencies = [
     "numpy>=2.0",
     "pydantic>=2.0",
     "llm_sdk",
+    "accelerate>=1.14.0",
 ]
 
-[dependecy-groups]
+[dependency-groups]
 dev = [
     "flake8>=7.0",
     "mypy>=1.10",
