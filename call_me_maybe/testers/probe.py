@@ -25,6 +25,9 @@ regex = potato.encode("fn_substitute_string_with_regex")[0].tolist()
 for i in regex:
     print(i, repr(potato.decode(i)))
 
+for i in ["<|im_end|>", "<think>", "</think>", "<|endoftext|>"]:
+    print(repr(i), potato.encode(i)[0].tolist())
+
 t = time.perf_counter()
 logits = potato.get_logits_from_input_ids(reverse_string)
 print(len(logits), (time.perf_counter() - t) * 1000, "ms")

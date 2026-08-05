@@ -40,6 +40,5 @@ def main() -> None:
         print(f"Error: {e}", file=sys.stderr)
 
 
-
 if __name__ == "__main__":
     main()
