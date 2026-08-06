@@ -1,5 +1,8 @@
 from dataclasses import dataclass, field
+from typing import Any
+
 from .errors import CallMeMaybeError
+
 
 @dataclass
 class TrieNode:
@@ -18,7 +21,7 @@ class Trie:
             node.name = name
 
     @property
-    def name(self) -> str:
+    def name(self) -> Any:
         return self._cursor.name
 
     def reset(self) -> None:
@@ -29,5 +32,8 @@ class Trie:
 
     def advance(self, token: int) -> None:
         if token not in self._cursor.children:
-            raise CallMeMaybeError(f"{token} is not an available token.")
+            raise CallMeMaybeError(
+                    f"internal error: token {token} is not valid continuation"
+                    f" (allowed: {sorted(self._cursor.children)})"
+                    )
         self._cursor = self._cursor.children[token]
