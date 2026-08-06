@@ -24,3 +24,6 @@ print("----")
 logits = potato.get_logits_from_input_ids(ids)
 best = max(range(len(logits)), key=lambda i: logits[i])
 print("model wants:", repr(potato.decode([best])), best)
+
+for fun in functions:
+    print(fun.name, potato.encode(fun.name)[0].tolist()
