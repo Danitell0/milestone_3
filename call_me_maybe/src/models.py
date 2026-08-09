@@ -6,6 +6,7 @@ class JsonType(str, Enum):
     NUMBER = "number"
     STRING = "string"
     BOOLEAN = "boolean"
+    INTEGER = "integer"
 
 
 class TestPrompt(BaseModel):
@@ -21,3 +22,9 @@ class FunctionSpec(BaseModel):
     description: str
     parameters: dict[str, TypeSpec]
     returns: TypeSpec
+
+class FunctionCall(BaseModel):
+    name: str
+    prompt: str
+    parameters: dict[str, bool | int | float | str]
+

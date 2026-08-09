@@ -21,7 +21,12 @@ class Trie:
             node.name = name
 
     @property
-    def name(self) -> Any:
+    def name(self) -> str:
+        if self._cursor.name is None:
+            raise CallMeMaybeError(
+                    "internal error: name requested befoer reaching a "
+                    "complete function name."
+                    )
         return self._cursor.name
 
     def reset(self) -> None:
