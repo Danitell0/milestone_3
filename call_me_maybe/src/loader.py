@@ -43,3 +43,16 @@ def load_functions(path: Path) -> list[FunctionSpec]:
         first = e.errors()[0]
         where = " -> ".join(str(x) for x in first['loc'])
         raise CallMeMaybeError(f"{path}: {where}: {first['msg']}") from e
+
+
+def load_vocab(path: Path) -> dict[int, str]:
+    try:
+        raw = _load_json(path)
+        result: dict[str, int] = TypeAdapter(
+                dict[str, int]).validate_python(raw)
+        invert = {v: k for k, v in result.items()}
+        return invert
+    except ValidationError as e:
+        first = e.errors()[0]
+        where = " -> ".join(str(x) for x in first['loc'])
+        raise CallMeMaybeError(f"{path}: {where}: {first['msg']}") from e

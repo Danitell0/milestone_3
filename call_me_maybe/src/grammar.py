@@ -1,1 +1,2 @@
-# TODO: Get the parameters to fill the output
+from pathlib import Path
+

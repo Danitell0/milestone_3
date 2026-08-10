@@ -2,7 +2,9 @@ from .models import FunctionSpec, FunctionCall
 from llm_sdk import Small_LLM_Model
 from .prompt import build_prompt
 from .trie import Trie
+from .loader import load_vocab
 
+from pathlib import Path
 
 class Engine:
     def __init__(
@@ -12,6 +14,7 @@ class Engine:
         self._model = model
         self._functions = functions
         self._trie = self._build_trie()
+        self._vocab = load_vocab(Path(model.get_path_to_vocab_file()))
 
     def call(self, prompt: str) -> FunctionCall:
         text = build_prompt(prompt, self._functions)
