@@ -23,8 +23,8 @@ class FunctionSpec(BaseModel):
     parameters: dict[str, TypeSpec]
     returns: TypeSpec
 
+
 class FunctionCall(BaseModel):
     name: str
     prompt: str
     parameters: dict[str, bool | int | float | str]
-

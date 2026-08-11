@@ -1,5 +1,4 @@
 from dataclasses import dataclass, field
-from typing import Any
 
 from .errors import CallMeMaybeError
 
@@ -8,6 +7,7 @@ from .errors import CallMeMaybeError
 class TrieNode:
     name: str | None = None
     children: dict[int, "TrieNode"] = field(default_factory=dict)
+
 
 class Trie:
     def __init__(self, names: dict[str, list[int]]) -> None:

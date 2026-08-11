@@ -10,6 +10,7 @@ from .models import FunctionCall
 from .loader import load_prompts, load_functions
 from llm_sdk import Small_LLM_Model
 
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
             description="Parsing arguments to get PATH")
@@ -38,7 +39,7 @@ def main() -> None:
         args = parse_args()
         prompts = load_prompts(args.input)
         functions = load_functions(args.functions_definition)
-        
+
         potato = Small_LLM_Model()
         potato_engine = Engine(potato, functions)
 

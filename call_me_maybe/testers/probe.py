@@ -1,6 +1,3 @@
-#!/usr/bin/env python3
-
-import time
 from llm_sdk import Small_LLM_Model
 from src.prompt import build_prompt
 from pathlib import Path
@@ -26,4 +23,4 @@ best = max(range(len(logits)), key=lambda i: logits[i])
 print("model wants:", repr(potato.decode([best])), best)
 
 for fun in functions:
-    print(fun.name, potato.encode(fun.name)[0].tolist()
+    print(fun.name, potato.encode(fun.name)[0].tolist())

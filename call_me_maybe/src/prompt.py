@@ -7,6 +7,7 @@ def format_functions(functions: list[FunctionSpec]) -> str:
         lines.append(f"-> {func.name}: {func.description}")
     return "\n".join(lines)
 
+
 def build_prompt(prompt: str, functions: list[FunctionSpec]) -> str:
     system = (
             "You are a function calling assistant, Given a user request, "

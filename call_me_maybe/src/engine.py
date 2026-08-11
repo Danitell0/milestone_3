@@ -6,6 +6,7 @@ from .loader import load_vocab
 
 from pathlib import Path
 
+
 class Engine:
     def __init__(
             self,
