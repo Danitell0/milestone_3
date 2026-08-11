@@ -1,7 +1,5 @@
 from enum import Enum, auto
 
-from .loader import load_vocab
-
 
 class NumState(Enum):
     START = auto()

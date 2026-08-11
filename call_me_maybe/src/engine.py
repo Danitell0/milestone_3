@@ -3,8 +3,13 @@ from llm_sdk import Small_LLM_Model
 from .prompt import build_prompt
 from .trie import Trie
 from .loader import load_vocab
+from .grammar import allowed_number_tokens, is_whole_number
+from .errors import CallMeMaybeError
 
 from pathlib import Path
+
+
+MAX_NUMBER_TOKENS = 20
 
 
 class Engine:
@@ -40,3 +45,31 @@ class Engine:
 
     def _encode(self, text: str) -> list[int]:
         return self._model.encode(text)[0].tolist()
+
+    def _generate_number(self, ids: list[int], terminator: int) -> str:
+        text = ""
+        for _ in range(MAX_NUMBER_TOKENS):
+            allowed = allowed_number_tokens(self._vocab, text)
+            if is_whole_number(text):
+                allowed = allowed | {terminator}
+            logits = self._model.get_logits_from_input_ids(ids)
+            best = max(allowed, key=lambda t: logits[t])
+            if best == terminator:
+                break
+            ids.append(best)
+            text += self._vocab[best]
+        else:
+            raise CallMeMaybeError("internal error: number generator "
+                                   "exceeded token list.")
+        return text
+
+    def _generate_parameters(self, ids: list[int], spec: FunctionSpec) -> str:
+        values = {}
+
+        params =list(spec.parameters.items())
+        if not params:
+            values.append(self._model.encode('{}'))
+            return {}
+        values.append(self._model.encode('{'))
+        for i, (param_name, type_spec) in enumerate(params):
+

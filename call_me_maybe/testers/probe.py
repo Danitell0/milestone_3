@@ -24,3 +24,6 @@ print("model wants:", repr(potato.decode([best])), best)
 
 for fun in functions:
     print(fun.name, potato.encode(fun.name)[0].tolist())
+
+for s in [", ", '"', '":', '": ', ' ']:
+    print(repr(s), potato.encode(s)[0].tolist())
