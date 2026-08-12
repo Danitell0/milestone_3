@@ -9,6 +9,14 @@ class NumState(Enum):
     FRAC_DIGITS = auto()
 
 
+def is_valid_string_prefix(text: str) -> bool:
+    return all(ch not in '"\\' and ord(ch) >= 0x20 for ch in text)
+
+
+def is_whole_string(text: str) -> bool:
+    return is_valid_string_prefix(text)
+
+
 def _number_state(text: str) -> NumState | None:
     state = NumState.START
     for ch in text:
@@ -53,4 +61,10 @@ def allowed_number_tokens(vocab: dict[int, str], text: str) -> set[int]:
     for token_id, token_text in vocab.items():
         if is_valid_number_prefix(text + token_text):
             allowed_tokens.add(token_id)
+    return allowed_tokens
+
+def allowed_string_tokens(vocab: dict[int, str], text: str) -> set[int]:
+    allowed_tokens: set[int] = set()
+    for token_id, token_text in vocab.items():
+        allowed_tokens.add(token_id)
     return allowed_tokens
