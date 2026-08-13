@@ -26,7 +26,7 @@ STD_ARGS	:= --functions_definition $(FUNCTIONS) \
 		   --input $(INPUT) \
 		   --output $(OUTPUT)
 
-.PHONY: help install run debug lint lint-strict test clean fclean
+.PHONY: help install run debug lint lint-strict test clean fclean moulinette
 
 # Commands --------------------
 
@@ -83,3 +83,10 @@ fclean:
 	@echo "$(RED)Removing output$(RESET)"
 	@rm -rf $(DATA_OUT)
 
+moulinette:
+	cd moulinette && uv run python -m moulinette prepare_exercises --set private
+	$(PY) -m $(SRC) \
+		--functions_definition moulinette/data/input/functions_definition.json \
+		--input moulinette/data/input/function_calling_tests.json \
+		--output /tmp/function_calls.json
+	cd moulinette && uv run python -m moulinette grade_student_answers /tmp/function_calls.json --set private

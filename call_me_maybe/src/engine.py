@@ -62,11 +62,12 @@ class Engine:
     def _encode(self, text: str) -> list[int]:
         return self._model.encode(text)[0].tolist()
 
-    def _generate_number(self, ids: list[int], terminator: int) -> str:
+    def _generate_number(self, ids: list[int], terminator: int,
+                         allow_fraction: bool = True) -> str:
         text = ""
         for _ in range(MAX_NUMBER_TOKENS):
-            allowed = allowed_number_tokens(self._vocab, text)
-            if is_whole_number(text):
+            allowed = allowed_number_tokens(self._vocab, text, allow_fraction)
+            if is_whole_number(text, allow_fraction):
                 allowed = allowed | {terminator}
             logits = self._model.get_logits_from_input_ids(ids)
             best = max(allowed, key=lambda t: logits[t])
@@ -86,6 +87,7 @@ class Engine:
             if is_whole_string(text):
                 allowed = allowed | {terminator}
             logits = self._model.get_logits_from_input_ids(ids)
+            print(repr(text))
             best = max(allowed, key=lambda t: logits[t])
             if best == terminator:
                 break
@@ -108,15 +110,18 @@ class Engine:
         for i, (param_name, type_spec) in enumerate(params):
             last = (i == len(params) - 1)
             terminator = self._close if last else self._comma
-            if type_spec.type is JsonType.NUMBER:
+            if type_spec.type in (JsonType.NUMBER, JsonType.INTEGER):
+                is_int = type_spec.type is JsonType.INTEGER
                 ids.extend(self._encode(f'"{param_name}": "'))
-                text = self._generate_number(ids, terminator)
-                values[param_name] = float(text)
+                text = self._generate_number(ids,
+                                             terminator,
+                                             allow_fraction=not is_int)
+                values[param_name] = int(text) if is_int else float(text)
             elif type_spec.type is JsonType.STRING:
                 ids.extend(self._encode(f'"{param_name}": "'))
                 terminator = self._quote_close if last else self._quote_comma
                 text = self._generate_string(ids, terminator)
-                values[param_name] = text
+                values[param_name] = text.strip()
                 ids.append(terminator)
             else:
                 raise CallMeMaybeError(
