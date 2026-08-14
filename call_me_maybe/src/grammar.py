@@ -9,12 +9,37 @@ class NumState(Enum):
     FRAC_DIGITS = auto()
 
 
+class StrState(Enum):
+    NORMAL = auto()
+    AFTER_BACKSLASH = auto()
+
+
+def _string_state(text: str) -> StrState | None:
+    state = StrState.NORMAL
+    for ch in text:
+        if state is StrState.NORMAL:
+            if ch == "\\":
+                state = StrState.AFTER_BACKSLASH
+            elif ch == '"':
+                return None
+            elif ord(ch) < 0x20:
+                return None
+            elif ch == "\ufffd":
+                return None
+        elif state is StrState.AFTER_BACKSLASH:
+            if ch in ('"', '\\', '/', 'b', 'f', 'n', 'r', 't'):
+                state = StrState.NORMAL
+            else:
+                return None
+    return state
+
+
 def is_valid_string_prefix(text: str) -> bool:
-    return all(ch not in '"\\' and ord(ch) >= 0x20 for ch in text)
+    return _string_state(text) is not None
 
 
 def is_whole_string(text: str) -> bool:
-    return is_valid_string_prefix(text)
+    return _string_state(text) is StrState.NORMAL
 
 
 def _number_state(text: str, allow_fration: bool = True) -> NumState | None:

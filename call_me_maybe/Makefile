@@ -40,6 +40,7 @@ help:
 	@echo "${GREEN}  test         ->${RESET} Run the pytest suite"
 	@echo "${GREEN}  clean        ->${RESET} Remove caches and ignore files"
 	@echo "${GREEN}  fclean       ->${RESET} clean + remove generated output"
+	@echo "${GREEN}  moulinette   ->${RESET} Run the moulinette tests if added"
 
 
 install:

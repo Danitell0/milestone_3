@@ -4,7 +4,17 @@ from .models import FunctionSpec
 def format_functions(functions: list[FunctionSpec]) -> str:
     lines: list[str] = []
     for func in functions:
-        lines.append(f"-> {func.name}: {func.description}")
+        params = " ,".join(
+                f"{name} ({spec.type.value})"
+                for name, spec in func.parameters.items()
+                )
+        if params:
+            lines.append(
+                    f"-> {func.name}: {func.description} "
+                    f"Parameters: {params}")
+        else:
+            lines.append(
+                    f"-> {func.name}: {func.description} (no parameters)")
     return "\n".join(lines)
 
 

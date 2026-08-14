@@ -8,6 +8,7 @@ from .grammar import (allowed_number_tokens, is_whole_number,
 from .errors import CallMeMaybeError
 
 from pathlib import Path
+import json
 
 
 MAX_NUMBER_TOKENS = 20
@@ -121,7 +122,7 @@ class Engine:
                 ids.extend(self._encode(f'"{param_name}": "'))
                 terminator = self._quote_close if last else self._quote_comma
                 text = self._generate_string(ids, terminator)
-                values[param_name] = text.strip()
+                values[param_name] = json.loads(f'"{text}"').strip()
                 ids.append(terminator)
             else:
                 raise CallMeMaybeError(
