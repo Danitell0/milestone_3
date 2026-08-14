@@ -94,5 +94,6 @@ def allowed_number_tokens(vocab: dict[int, str],
 def allowed_string_tokens(vocab: dict[int, str], text: str) -> set[int]:
     allowed_tokens: set[int] = set()
     for token_id, token_text in vocab.items():
-        allowed_tokens.add(token_id)
+        if is_valid_string_prefix(text + token_text):
+            allowed_tokens.add(token_id)
     return allowed_tokens

@@ -71,6 +71,7 @@ class Engine:
             if is_whole_number(text, allow_fraction):
                 allowed = allowed | {terminator}
             logits = self._model.get_logits_from_input_ids(ids)
+            print(repr(text))
             best = max(allowed, key=lambda t: logits[t])
             if best == terminator:
                 break
