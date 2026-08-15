@@ -22,7 +22,12 @@ def build_prompt(prompt: str, functions: list[FunctionSpec]) -> str:
     system = (
             "You are a function calling assistant, Given a user request, "
             "select the single function from the list below that best "
-            "fulfills it.\n\n"
+            "fulfills it.\n"
+            "String arguments must be copied exactly as they appear in the "
+            "user request, including punctuation and quote characters.\n"
+            "Example request: Format template: He said \"hi\" to {u}\n"
+            "Example answer: fn_example{\"template\": \"He said "
+            "\\\"hi\\\" to {u}\"}\n\n"
             f"Available functions\n{format_functions(functions)}")
     return (
             f"<|im_start|>system\n{system}<|im_end|>\n"

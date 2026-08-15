@@ -1,10 +1,12 @@
-from .models import FunctionSpec, FunctionCall, JsonType
+from .models import (FunctionSpec, FunctionCall, JsonType,
+                     ParamValue)
 from llm_sdk import Small_LLM_Model
 from .prompt import build_prompt
 from .trie import Trie
 from .loader import load_vocab
 from .grammar import (allowed_number_tokens, is_whole_number,
-                      allowed_string_tokens, is_whole_string)
+                      allowed_string_tokens, is_string_closed,
+                      is_string_done)
 from .errors import CallMeMaybeError
 
 from pathlib import Path
@@ -26,8 +28,6 @@ class Engine:
         self._vocab = load_vocab(Path(model.get_path_to_vocab_file()))
         self._comma = self._single_token(",")
         self._close = self._single_token("}")
-        self._quote_comma = self._single_token('",')
-        self._quote_close = self._single_token('"}')
         self._by_name = {f.name: f for f in functions}
 
     def call(self, prompt: str) -> FunctionCall:
@@ -71,63 +71,62 @@ class Engine:
             if is_whole_number(text, allow_fraction):
                 allowed = allowed | {terminator}
             logits = self._model.get_logits_from_input_ids(ids)
-            print(repr(text))
             best = max(allowed, key=lambda t: logits[t])
             if best == terminator:
                 break
             ids.append(best)
-            text += self._model.decode([best])
+            text += self._vocab[best]
         else:
             raise CallMeMaybeError("internal error: number generator "
                                    "exceeded token limit.")
         return text
 
-    def _generate_string(self, ids: list[int], terminator: int) -> str:
+    def _generate_string(self, ids: list[int],
+                         suffix: str) -> tuple[str, bool]:
+        """Generate a string body, returning it with the closing quote (and
+        *suffix*) stripped, plus whether the suffix was already emitted."""
         text = ""
         for _ in range(MAX_STRING_TOKENS):
-            allowed = allowed_string_tokens(self._vocab, text)
-            if is_whole_string(text):
-                allowed = allowed | {terminator}
+            allowed = allowed_string_tokens(self._vocab, text, suffix)
             logits = self._model.get_logits_from_input_ids(ids)
-            print(repr(text))
             best = max(allowed, key=lambda t: logits[t])
-            if best == terminator:
-                break
             ids.append(best)
-            text += self._model.decode([best])
-        else:
-            raise CallMeMaybeError("internal error: string generator "
-                                   "exceeded token limit.")
-        return text
+            text += self._vocab[best]
+            if is_string_done(text, suffix):
+                return text[:-2], True
+            if is_string_closed(text, suffix):
+                return text[:-1], False
+        raise CallMeMaybeError("internal error: string generator "
+                               "exceeded token limit.")
 
     def _generate_parameters(self, ids: list[int],
-                             spec: FunctionSpec) -> dict[str, float]:
-        values: dict[str, float] = {}
+                             spec: FunctionSpec) -> dict[str, ParamValue]:
+        values: dict[str, ParamValue] = {}
 
-        params =list(spec.parameters.items())
+        params = list(spec.parameters.items())
         if not params:
             ids.extend(self._encode('{}'))
             return {}
         ids.extend(self._encode('{'))
         for i, (param_name, type_spec) in enumerate(params):
             last = (i == len(params) - 1)
+            suffix = "}" if last else ","
             terminator = self._close if last else self._comma
             if type_spec.type in (JsonType.NUMBER, JsonType.INTEGER):
                 is_int = type_spec.type is JsonType.INTEGER
-                ids.extend(self._encode(f'"{param_name}": "'))
+                ids.extend(self._encode(f'"{param_name}": '))
                 text = self._generate_number(ids,
                                              terminator,
                                              allow_fraction=not is_int)
                 values[param_name] = int(text) if is_int else float(text)
+                ids.append(terminator)
             elif type_spec.type is JsonType.STRING:
                 ids.extend(self._encode(f'"{param_name}": "'))
-                terminator = self._quote_close if last else self._quote_comma
-                text = self._generate_string(ids, terminator)
-                values[param_name] = json.loads(f'"{text}"').strip()
-                ids.append(terminator)
+                text, emitted = self._generate_string(ids, suffix)
+                values[param_name] = json.loads(f'"{text}"')
+                if not emitted:
+                    ids.append(terminator)
             else:
                 raise CallMeMaybeError(
                         f"unsupported type {type_spec.type.value}")
-            ids.append(terminator)
         return values
-

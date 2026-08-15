@@ -9,6 +9,9 @@ class JsonType(str, Enum):
     INTEGER = "integer"
 
 
+ParamValue = bool | int | float | str
+
+
 class TestPrompt(BaseModel):
     prompt: str
 
@@ -27,4 +30,4 @@ class FunctionSpec(BaseModel):
 class FunctionCall(BaseModel):
     name: str
     prompt: str
-    parameters: dict[str, bool | int | float | str]
+    parameters: dict[str, ParamValue]
