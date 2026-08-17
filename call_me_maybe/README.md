@@ -5,6 +5,7 @@ Argparse Tutorial = "https://docs.python.org/3/howto/argparse.html"
 
 TODO:
     parse known arguments
+    all classes need to be pydantic
 
 
 help commands:
