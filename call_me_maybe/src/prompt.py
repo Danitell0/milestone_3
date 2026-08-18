@@ -65,7 +65,6 @@ def build_prompt(request: str, functions: list[FunctionSpec]) -> str:
             "Example request: Format template: He said \"hi\" to {u}\n"
             "Example answer: fn_example{\"template\": \"He said "
             "\\\"hi\\\" to {u}\"}\n\n"
-            "If the parameter is a path, use the right format with '/'\n\n"
             f"Available functions:\n{format_functions(functions)}")
     return (
             f"<|im_start|>system\n{system}<|im_end|>\n"
