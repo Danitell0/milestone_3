@@ -1,7 +1,7 @@
 from src.trie import Trie
 from src.errors import CallMeMaybeError
 
-t = Trie({"fn_greet": [8822, 1889, 3744],
+t = Trie.from_names({"fn_greet": [8822, 1889, 3744],
           "fn_add_numbers": [8822, 2891, 32964]})
 assert t.allowed() == {8822}
 t.advance(8822)

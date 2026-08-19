@@ -23,6 +23,7 @@ from .grammar import (allowed_number_tokens, is_whole_number,
                       is_string_done)
 from .errors import CallMeMaybeError
 
+from pydantic import BaseModel, ConfigDict, Field
 from pathlib import Path
 import json
 
@@ -31,33 +32,34 @@ MAX_NUMBER_TOKENS = 20
 MAX_STRING_TOKENS = 80
 
 
-class Engine:
+class Engine(BaseModel):
     """Holds the model and the per-run state needed to decode calls."""
 
-    def __init__(
-            self,
-            model: Small_LLM_Model,
-            functions: list[FunctionSpec]) -> None:
-        """Prepare everything that can be computed once.
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
-        The vocabulary, the name trie and the seperator token IDs are all
-        fixed for a run, so they are built here rather than per request.
+    model: Small_LLM_Model
+    functions: list[FunctionSpec]
 
-        Args:
-            model: The loaded language model.
-            functions: The available function definitions.
+    trie: Trie | None = None
+    vocab: dict[int, str] = Field(default_factory=dict)
+    by_name: dict[str, FunctionSpec] = Field(default_factory=dict)
+    comma: int = -1
+    close: int = -1
+
+    def model_post_init(self, context: object) -> None:
+        """Compute everything that is fixed for the whole run.
+
+        Runs after field validation.
+        
         Raises:
-            CallMeMaybeError: If the vocabulary cannot be read or if a
-            seperator does not encode to a single token, which would mean
-            this tokenizer needs different handling.
+            CallMeMaybeError: If the vocabulary cannot be read, or a
+                separator does not encode to a single token.
         """
-        self._model = model
-        self._functions = functions
-        self._trie = self._build_trie()
-        self._vocab = load_vocab(Path(model.get_path_to_vocab_file()))
-        self._comma = self._single_token(",")
-        self._close = self._single_token("}")
-        self._by_name = {f.name: f for f in functions}
+        self.vocab = load_vocab(Path(self.model.get_path_to_vocab_file()))
+        self.trie = self._build_trie()
+        self.comma = self._single_token(",")
+        self.close = self._single_token("}")
+        self.by_name = {f.name: f for f in self.functions}
 
     def call(self, prompt: str) -> FunctionCall:
         """Decode one request into a schema-valid function call.
@@ -70,25 +72,26 @@ class Engine:
             CallMeMaybeError: If generation exceeds a token limit or the
                 schema declares a type without a grammar.
         """
-        text = build_prompt(prompt, self._functions)
+        assert self.trie is not None
+        text = build_prompt(prompt, self.functions)
         ids = self._encode(text)
         # the cursor is instance state, so each call must claim it afresh.
         # Without this every request after the first would find the trie
         # already at a leaf
-        self._trie.reset()
+        self.trie.reset()
         while True:
-            allowed = self._trie.allowed()
+            allowed = self.trie.allowed()
             # empty only at a leaf, which means a complete name
             if not allowed:
                 break
-            logits = self._model.get_logits_from_input_ids(ids)
+            logits = self.model.get_logits_from_input_ids(ids)
             # equivalent to setting every other logit to -inf and taking
             # the argmax, but over a handful of tokens rather than 151936
             best = max(allowed, key=lambda t: logits[t])
             ids.append(best)
-            self._trie.advance(best)
-        name = self._trie.name
-        spec = self._by_name[name]
+            self.trie.advance(best)
+        name = self.trie.name
+        spec = self.by_name[name]
         params = self._generate_parameters(ids, spec)
         return FunctionCall(prompt=prompt, name=name, parameters=params)
 
@@ -111,9 +114,9 @@ class Engine:
     def _build_trie(self) -> Trie:
         """Tokenize every function name into a prefix tree."""
         name_tokens: dict[str, list[int]] = {}
-        for spec in self._functions:
+        for spec in self.functions:
             name_tokens[spec.name] = self._encode(spec.name)
-        return Trie(name_tokens)
+        return Trie.from_names(name_tokens)
 
     def _encode(self, text: str) -> list[int]:
         """Encode text to a flat list of token IDs.
@@ -122,7 +125,7 @@ class Engine:
         get_logits_from_input_ids expects a list, so the conversion is
         kept in one place.
         """
-        return self._model.encode(text)[0].tolist()
+        return self.model.encode(text)[0].tolist()
 
     def _generate_number(self, ids: list[int], terminator: int,
                          allow_fraction: bool = True) -> str:
@@ -137,17 +140,17 @@ class Engine:
         """
         text = ""
         for _ in range(MAX_NUMBER_TOKENS):
-            allowed = allowed_number_tokens(self._vocab, text, allow_fraction)
+            allowed = allowed_number_tokens(self.vocab, text, allow_fraction)
             # Offering the terminatior only in an accepting state is what
             # prevents stopping on something like "2." or "-"
             if is_whole_number(text, allow_fraction):
                 allowed = allowed | {terminator}
-            logits = self._model.get_logits_from_input_ids(ids)
+            logits = self.model.get_logits_from_input_ids(ids)
             best = max(allowed, key=lambda t: logits[t])
             if best == terminator:
                 break
             ids.append(best)
-            text += self._vocab[best]
+            text += self.vocab[best]
         else:
             # for/else reached only when the loop was never broken out of
             raise CallMeMaybeError("internal error: number generator "
@@ -175,11 +178,11 @@ class Engine:
         """
         text = ""
         for _ in range(MAX_STRING_TOKENS):
-            allowed = allowed_string_tokens(self._vocab, text, suffix)
-            logits = self._model.get_logits_from_input_ids(ids)
+            allowed = allowed_string_tokens(self.vocab, text, suffix)
+            logits = self.model.get_logits_from_input_ids(ids)
             best = max(allowed, key=lambda t: logits[t])
             ids.append(best)
-            text += self._vocab[best]
+            text += self.vocab[best]
             # merged tokens: drop both the quote and the seperator
             if is_string_done(text, suffix):
                 return text[:-2], True
@@ -216,7 +219,7 @@ class Engine:
         for i, (param_name, type_spec) in enumerate(params):
             last = (i == len(params) - 1)
             suffix = "}" if last else ","
-            terminator = self._close if last else self._comma
+            terminator = self.close if last else self.comma
             if type_spec.type in (JsonType.NUMBER, JsonType.INTEGER):
                 is_int = type_spec.type is JsonType.INTEGER
                 ids.extend(self._encode(f'"{param_name}": '))

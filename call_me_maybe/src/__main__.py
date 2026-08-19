@@ -69,7 +69,7 @@ def main() -> int:
         # loading costs seconds and over a gigabyte of memory so the model
         # is built once and reused for every prompt
         model = Small_LLM_Model()
-        engine = Engine(model, functions)
+        engine = Engine(model=model, functions=functions)
 
         results: list[FunctionCall] = []
         for p in prompts:
