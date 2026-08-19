@@ -130,10 +130,16 @@ class Engine:
 
         Args:
             ids: The token sequence, extended in place with each choice.
-            terminator"""
+            terminator: Token ID for the separator that follows this
+                value, offered only once the number is complete.
+            allow_fraction: False for integer type parameters, which makes a
+                decimal point unreachable.
+        """
         text = ""
         for _ in range(MAX_NUMBER_TOKENS):
             allowed = allowed_number_tokens(self._vocab, text, allow_fraction)
+            # Offering the terminatior only in an accepting state is what
+            # prevents stopping on something like "2." or "-"
             if is_whole_number(text, allow_fraction):
                 allowed = allowed | {terminator}
             logits = self._model.get_logits_from_input_ids(ids)
@@ -143,14 +149,30 @@ class Engine:
             ids.append(best)
             text += self._vocab[best]
         else:
+            # for/else reached only when the loop was never broken out of
             raise CallMeMaybeError("internal error: number generator "
                                    "exceeded token limit.")
         return text
 
     def _generate_string(self, ids: list[int],
                          suffix: str) -> tuple[str, bool]:
-        """Generate a string body, returning it with the closing quote (and
-        *suffix*) stripped, plus whether the suffix was already emitted."""
+        """Generate a string body, returning it with the closing quote
+        stripped, plus whether the suffix was already emitted.
+
+        The closing quote is generated rather prefilled because the tokenizer
+        merges it with what follows: '",' and '"}' are single tokens the
+        model prefers. Offering only a bare quote pushes it onto a
+        low-probability path it may never take.
+
+        Args:
+            ids: The token sequence, extended in place with each choice.
+            suffix: The character expected after the closing quote.
+        Returns:
+            The string body and True if the chosen token carried the suffix
+            as well.
+        Raises:
+            CallMeMaybeError: If the token limit is reached.
+        """
         text = ""
         for _ in range(MAX_STRING_TOKENS):
             allowed = allowed_string_tokens(self._vocab, text, suffix)
@@ -158,8 +180,10 @@ class Engine:
             best = max(allowed, key=lambda t: logits[t])
             ids.append(best)
             text += self._vocab[best]
+            # merged tokens: drop both the quote and the seperator
             if is_string_done(text, suffix):
                 return text[:-2], True
+            # bare closing quote: drop it and let the caller add the rest
             if is_string_closed(text, suffix):
                 return text[:-1], False
         raise CallMeMaybeError("internal error: string generator "
@@ -167,6 +191,21 @@ class Engine:
 
     def _generate_parameters(self, ids: list[int],
                              spec: FunctionSpec) -> dict[str, ParamValue]:
+        """Generate the argument object for one function.
+
+        Keys, colons, commas and braces are written directly into the
+        sequence, so they cost no forward pass and cannot come out wrong.
+        The model fills in values only.
+
+        Args:
+            ids: The token sequence, extended in place.
+            spec: The selected function, whose parameters drive the loop.
+        Returns:
+            Parameter names mapped to their extracted values.
+        Raises:
+            CallMeMaybeError: If a declared type has no grammar or if a value
+                exceeds its token limits.
+        """
         values: dict[str, ParamValue] = {}
 
         params = list(spec.parameters.items())
@@ -184,11 +223,15 @@ class Engine:
                 text = self._generate_number(ids,
                                              terminator,
                                              allow_fraction=not is_int)
+                # int() is safe because the grammar made "." unreachable
                 values[param_name] = int(text) if is_int else float(text)
                 ids.append(terminator)
             elif type_spec.type is JsonType.STRING:
                 ids.extend(self._encode(f'"{param_name}": "'))
                 text, emitted = self._generate_string(ids, suffix)
+                # text holds the JSON form, with escapes still encoded
+                # re-parsing it turns \\ back into one backslash rather
+                # than letting json.dump escape it a second time
                 values[param_name] = json.loads(f'"{text}"')
                 if not emitted:
                     ids.append(terminator)

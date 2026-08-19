@@ -12,7 +12,7 @@ from typing import Any
 from pydantic import TypeAdapter, ValidationError
 
 from .errors import CallMeMaybeError
-from .models import TestPrompt, FunctionSpec
+from .models import TestPrompt, FunctionSpec, FunctionCall
 
 
 def _load_json(path: Path) -> Any:
@@ -158,3 +158,21 @@ def load_vocab(path: Path) -> dict[int, str]:
         first = e.errors()[0]
         where = " -> ".join(str(x) for x in first['loc'])
         raise CallMeMaybeError(f"{path}: {where}: {first['msg']}") from e
+
+
+def save_results(results: list[FunctionCall], path: Path) -> None:
+    """Write the function calls to path as JSON.
+
+    Args:
+        results: The calls to serialise.
+        path: Destination file. Parent directories are created.
+    Raises:
+        CallMeMaybeError: If the file cannot be written.
+    """
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with open(path, "w") as file:
+            json.dump([r.model_dump() for r in results], file,
+                      indent=2, ensure_ascii=False)
+    except OSError as e:
+        raise CallMeMaybeError(f"{path}: {e.strerror}") from e

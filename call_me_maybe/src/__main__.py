@@ -1,3 +1,11 @@
+"""Command-line entry point, run as 'python -m src'.
+
+This module is the boundary between the outside world and the program.
+It read arguments, drives the pipeline and turns anticipated failures
+into message and an exit code. It catches only CallMeMaybeError, so a
+traceback instead of being disguised as a clean error.
+"""
+
 import argparse
 import sys
 import json
@@ -7,13 +15,24 @@ from pathlib import Path
 from .errors import CallMeMaybeError
 from .engine import Engine
 from .models import FunctionCall
-from .loader import load_prompts, load_functions
+from .loader import load_prompts, load_functions, save_results
 from llm_sdk import Small_LLM_Model
 
 
 def parse_args() -> argparse.Namespace:
+    """Parse the command-line arguments.
+
+    All three paths are optional and default to the layout the subject
+    specifies.
+
+    Returns:
+        The parsed arguments with each path as a Path object.
+    """
     parser = argparse.ArgumentParser(
-            description="Parsing arguments to get PATH")
+            description=(
+                "Translate natural-language into schema-valid JSON "
+                "function calls using constrained decoding."
+                ))
     parser.add_argument("--input",
                         default=Path(
                             "data/input/function_calling_tests.json"),
@@ -34,29 +53,35 @@ def parse_args() -> argparse.Namespace:
     return args
 
 
-def main() -> None:
+def main() -> int:
+    """Run the pipeline and write the results.
+
+    Exits with status 1 after printing a single line to stderr if any
+    anticipated failure occurs.
+
+    Returns:
+    0 on success, 1 if an anticipated failure occurred.
+    """
     try:
         args = parse_args()
         prompts = load_prompts(args.input)
         functions = load_functions(args.functions_definition)
-
-        potato = Small_LLM_Model()
-        potato_engine = Engine(potato, functions)
+        # loading costs seconds and over a gigabyte of memory so the model
+        # is built once and reused for every prompt
+        model = Small_LLM_Model()
+        engine = Engine(model, functions)
 
         results: list[FunctionCall] = []
         for p in prompts:
-            call = potato_engine.call(p.prompt)
-            print(f"{p.prompt} -> {call.name}")
+            call = engine.call(p.prompt)
+            print(f"{p.prompt} -> {call.name}", file=sys.stderr)
             results.append(call)
-
-        args.output.parent.mkdir(parents=True, exist_ok=True)
-        data = [r.model_dump() for r in results]
-        with open(args.output, "w") as file:
-            json.dump(data, file, indent=2, ensure_ascii=False)
+            save_results(results, args.output)
     except CallMeMaybeError as e:
         print(f"Error: {e}", file=sys.stderr)
-        sys.exit(1)
+        return 1
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
