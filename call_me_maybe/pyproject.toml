@@ -23,7 +23,7 @@ dev = [
 ]
 
 [tool.uv]
-package = false
+package = alse
 
 [tool.uv.sources]
 llm_sdk = { path = "llm_sdk" }
