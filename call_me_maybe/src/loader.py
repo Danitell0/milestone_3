@@ -48,7 +48,7 @@ def _bytes_to_unicode() -> dict[int, str]:
     Latin-1 represent themselves. The remaining 68 bytes are pushed into the
     range starting at U+0100. This is why a space appears as "Ġ" and
     a newline as "Ċ" in vocab.json.
-    
+
     Returns:
         All 256 byte values mapped to distinct characters.
     """
@@ -63,6 +63,7 @@ def _bytes_to_unicode() -> dict[int, str]:
             cs.append(256 + n)
             n += 1
     return dict(zip(bs, (chr(c) for c in cs)))
+
 
 # Built once at import, inverts the table above for decoding
 _BYTE_DECODER = {c: b for b, c in _bytes_to_unicode().items()}

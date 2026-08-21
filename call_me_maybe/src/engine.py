@@ -50,7 +50,7 @@ class Engine(BaseModel):
         """Compute everything that is fixed for the whole run.
 
         Runs after field validation.
-        
+
         Raises:
             CallMeMaybeError: If the vocabulary cannot be read, or a
                 separator does not encode to a single token.
@@ -125,7 +125,8 @@ class Engine(BaseModel):
         get_logits_from_input_ids expects a list, so the conversion is
         kept in one place.
         """
-        return self.model.encode(text)[0].tolist()
+        ids: list[int] = self.model.encode(text)[0].tolist()
+        return ids
 
     def _generate_number(self, ids: list[int], terminator: int,
                          allow_fraction: bool = True) -> str:

@@ -93,12 +93,12 @@ def is_string_done(text: str, suffix: str = "") -> bool:
     return _string_state(text, suffix) is StrState.DONE
 
 
-def _number_state(text: str, allow_fration: bool = True) -> NumState | None:
+def _number_state(text: str, allow_fraction: bool = True) -> NumState | None:
     """Walk text through the number automaton.
 
     Args:
         text: Characters generated so far.
-        allow_fration: Whether a decimal point is permitted. False for
+        allow_fraction: Whether a decimal point is permitted. False for
             parameters typed "integer", which keeps int() from failing on
             the result.
 
@@ -124,7 +124,7 @@ def _number_state(text: str, allow_fration: bool = True) -> NumState | None:
         elif state is NumState.INT_DIGITS:
             if ch.isdigit():
                 pass
-            elif ch == "." and allow_fration:
+            elif ch == "." and allow_fraction:
                 state = NumState.AFTER_DOT
             else:
                 return None
@@ -140,26 +140,26 @@ def _number_state(text: str, allow_fration: bool = True) -> NumState | None:
     return state
 
 
-def is_valid_number_prefix(text: str, allow_fration: bool = True) -> bool:
+def is_valid_number_prefix(text: str, allow_fraction: bool = True) -> bool:
     """Whether text coult still grow into a valid number."""
-    return _number_state(text, allow_fration) is not None
+    return _number_state(text, allow_fraction) is not None
 
 
-def is_whole_number(text: str, allow_fration: bool = True) -> bool:
+def is_whole_number(text: str, allow_fraction: bool = True) -> bool:
     """Whether text is a complete number that generation may stop on."""
-    return _number_state(text, allow_fration) in (NumState.INT_DIGITS,
-                                                  NumState.FRAC_DIGITS)
+    return _number_state(text, allow_fraction) in (NumState.INT_DIGITS,
+                                                   NumState.FRAC_DIGITS)
 
 
 def allowed_number_tokens(vocab: dict[int, str],
                           text: str,
-                          allow_fration: bool = True) -> set[int]:
+                          allow_fraction: bool = True) -> set[int]:
     """Token IDs that may legally continue a number.
 
     Args:
         vocab: Token IDs mapped to the text they represent.
         text: The number generated so far.
-        allow_fration: Whether a decimal point is permitted.
+        allow_fraction: Whether a decimal point is permitted.
 
     Returns:
         Every token whose characters keep the number valid. Token IDs
@@ -168,7 +168,7 @@ def allowed_number_tokens(vocab: dict[int, str],
     """
     allowed_tokens: set[int] = set()
     for token_id, token_text in vocab.items():
-        if is_valid_number_prefix(text + token_text, allow_fration):
+        if is_valid_number_prefix(text + token_text, allow_fraction):
             allowed_tokens.add(token_id)
     return allowed_tokens
 

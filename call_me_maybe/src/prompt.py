@@ -1,6 +1,6 @@
 """Prompt construction for the LLM chat format.
 
-The SDK exposes only the raw tokenizer amnd apply_chat_template lives on 
+The SDK exposes only the raw tokenizer amnd apply_chat_template lives on
 a private attribute, so the chat markup iswritten out literally here.
 Each <|im_start|> marker encodes to a single token ID, which is what
 makes the modelread these as turn boundaries rather than as text.
