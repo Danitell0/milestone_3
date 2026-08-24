@@ -164,7 +164,7 @@ Every file is parsed into pydantic models on load, so the rest of the program wo
 | Machine | speed |
 | --- | --- |
 | personal machine | 38.6 seconds |
-| campus machine | TODO |
+| campus machine | 3:10 minutes |
 
 A single forward pass costs 150-250 ms depending on machine load and the SDK exposes no key-value cache, so every step re-processes the whole sequence rather than extending it.
 

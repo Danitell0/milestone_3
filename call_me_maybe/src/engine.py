@@ -20,7 +20,7 @@ from .trie import Trie
 from .loader import load_vocab
 from .grammar import (allowed_number_tokens, is_whole_number,
                       allowed_string_tokens, is_string_closed,
-                      is_string_done)
+                      is_string_done, allowed_boolean_tokens)
 from .errors import CallMeMaybeError
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -30,6 +30,7 @@ import json
 # caps on generated tokens per value
 MAX_NUMBER_TOKENS = 20
 MAX_STRING_TOKENS = 80
+MAX_BOOLEAN_TOKENS = 6
 
 
 class Engine(BaseModel):
@@ -127,6 +128,34 @@ class Engine(BaseModel):
         """
         ids: list[int] = self.model.encode(text)[0].tolist()
         return ids
+
+    def _generate_boolean(self, ids: list[int]) -> str:
+        """Generate one boolean literal.
+
+        A boolean has exactly two possible spellings, so once the word is
+        complete no token can extend it. There is no terminator to offer and
+        no seperator completeness check is needed.
+
+        Args:
+            ids: The token sequence, extended in place with each choice.
+        Returns:
+            Either "true" or "false".
+        Raises:
+            CallMeMaybeError: If the token limit is reached.
+        """
+        text = ""
+        for _ in range(MAX_BOOLEAN_TOKENS):
+            allowed = allowed_boolean_tokens(self.vocab, text)
+            if not allowed:
+                break
+            logits = self.model.get_logits_from_input_ids(ids)
+            best = max(allowed, key=lambda t: logits[t])
+            ids.append(best)
+            text += self.vocab[best]
+        else:
+            raise CallMeMaybeError("internal error: boolean generator "
+                                   "exceeded token limit.")
+        return text
 
     def _generate_number(self, ids: list[int], terminator: int,
                          allow_fraction: bool = True) -> str:
@@ -239,6 +268,11 @@ class Engine(BaseModel):
                 values[param_name] = json.loads(f'"{text}"')
                 if not emitted:
                     ids.append(terminator)
+            elif type_spec.type is JsonType.BOOLEAN:
+                ids.extend(self._encode(f'"{param_name}": '))
+                text = self._generate_boolean(ids)
+                values[param_name] = text == "true"
+                ids.append(terminator)
             else:
                 raise CallMeMaybeError(
                         f"unsupported type {type_spec.type.value}")
