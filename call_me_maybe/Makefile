@@ -26,7 +26,7 @@ STD_ARGS	:= --functions_definition $(FUNCTIONS) \
 		   --input $(INPUT) \
 		   --output $(OUTPUT)
 
-.PHONY: help install run debug lint lint-strict test clean fclean moulinette
+.PHONY: help install run debug lint lint-strict clean fclean moulinette visual test
 
 # Commands --------------------
 
@@ -41,6 +41,7 @@ help:
 	@echo "${GREEN}  clean        ->${RESET} Remove caches and ignore files"
 	@echo "${GREEN}  fclean       ->${RESET} clean + remove generated output"
 	@echo "${GREEN}  moulinette   ->${RESET} Run the moulinette tests if added"
+	@echo "${GREEN}  visual       ->${RESET} Run the program with constrained decoding steps"
 
 
 install:
@@ -67,18 +68,15 @@ lint-strict:
 	@echo "mypy --strict... ${GREEN}Success${RESET}"
 
 $(DATA_OUT):
-	mkdir -p $@
-
-test:
-	@echo "${GREEN}Running pytest suite${RESET}"
-	@$(UV) run pytest -q
+	@mkdir -p $@
 
 clean:
-	find . -path './.venv' -prune -o -type d -name '__pycache__' -print0 \
+	@echo "$(RED)Removing cache files$(RESET)"
+	@find . -path './.venv' -prune -o -type d -name '__pycache__' -print0 \
 		| xargs -0 -r rm -rf
-	find . -path './.venv' -prune -o -type f -name '*.py[co]' -print0 \
+	@find . -path './.venv' -prune -o -type f -name '*.py[co]' -print0 \
 		| xargs -0 -r rm -f
-	rm -rf .mypy_cache .pytest_cache .ruff_cache
+	@rm -rf .mypy_cache .pytest_cache .ruff_cache
 
 fclean:
 	@echo "$(RED)Removing output$(RESET)"
@@ -91,3 +89,12 @@ moulinette:
 		--input moulinette/data/input/function_calling_tests.json \
 		--output /tmp/function_calls.json
 	cd moulinette && uv run python -m moulinette grade_student_answers /tmp/function_calls.json --set private
+
+# Bonus ----------------------
+
+visual:
+	@$(PY) -m $(SRC) $(STD_ARGS) --visualize
+
+test:
+	@echo "Running tests"
+	@$(UV) run pytest testers/ -v

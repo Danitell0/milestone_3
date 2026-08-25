@@ -26,6 +26,7 @@ from .errors import CallMeMaybeError
 from pydantic import BaseModel, ConfigDict, Field
 from pathlib import Path
 import json
+import sys
 
 # caps on generated tokens per value
 MAX_NUMBER_TOKENS = 20
@@ -40,6 +41,7 @@ class Engine(BaseModel):
 
     model: Small_LLM_Model
     functions: list[FunctionSpec]
+    visualize: bool = False
 
     trie: Trie | None = None
     vocab: dict[int, str] = Field(default_factory=dict)
@@ -74,12 +76,15 @@ class Engine(BaseModel):
                 schema declares a type without a grammar.
         """
         assert self.trie is not None
-        text = build_prompt(prompt, self.functions)
-        ids = self._encode(text)
+        if self.visualize:
+            print(f"\n{prompt}", file=sys.stderr)
+        prompt_text = build_prompt(prompt, self.functions)
+        ids = self._encode(prompt_text)
         # the cursor is instance state, so each call must claim it afresh.
         # Without this every request after the first would find the trie
         # already at a leaf
         self.trie.reset()
+        name_text = ""
         while True:
             allowed = self.trie.allowed()
             # empty only at a leaf, which means a complete name
@@ -89,8 +94,11 @@ class Engine(BaseModel):
             # equivalent to setting every other logit to -inf and taking
             # the argmax, but over a handful of tokens rather than 151936
             best = max(allowed, key=lambda t: logits[t])
+            if self.visualize:
+                self._trace(name_text, allowed, best, logits)
             ids.append(best)
             self.trie.advance(best)
+            name_text += self.vocab[best]
         name = self.trie.name
         spec = self.by_name[name]
         params = self._generate_parameters(ids, spec)
@@ -177,6 +185,8 @@ class Engine(BaseModel):
                 allowed = allowed | {terminator}
             logits = self.model.get_logits_from_input_ids(ids)
             best = max(allowed, key=lambda t: logits[t])
+            if self.visualize:
+                self._trace(text, allowed, best, logits)
             if best == terminator:
                 break
             ids.append(best)
@@ -211,6 +221,8 @@ class Engine(BaseModel):
             allowed = allowed_string_tokens(self.vocab, text, suffix)
             logits = self.model.get_logits_from_input_ids(ids)
             best = max(allowed, key=lambda t: logits[t])
+            if self.visualize:
+                self._trace(text, allowed, best, logits)
             ids.append(best)
             text += self.vocab[best]
             # merged tokens: drop both the quote and the seperator
@@ -250,6 +262,9 @@ class Engine(BaseModel):
             last = (i == len(params) - 1)
             suffix = "}" if last else ","
             terminator = self.close if last else self.comma
+            if self.visualize:
+                print(f"{spec.name} -> {param_name} ({type_spec.type.value})",
+                      file=sys.stderr)
             if type_spec.type in (JsonType.NUMBER, JsonType.INTEGER):
                 is_int = type_spec.type is JsonType.INTEGER
                 ids.extend(self._encode(f'"{param_name}": '))
@@ -277,3 +292,10 @@ class Engine(BaseModel):
                 raise CallMeMaybeError(
                         f"unsupported type {type_spec.type.value}")
         return values
+
+    def _trace(self, text: str, allowed: set[int],
+               best: int, logits: list[float]) -> None:
+        """Print one constrained decoding step to stderr."""
+        print(f"  {text!r:<24} {len(allowed):>6}/{len(logits)} "
+              f"→ {self.vocab.get(best, '<terminator>')!r}",
+              file=sys.stderr)

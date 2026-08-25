@@ -67,6 +67,9 @@ uv run python -m src \
 | `make lint-strict` | `flake8 .` and `mypy . --strict` |
 | `make clean` | Remove caches and bytecode |
 | `make fclean` | Remove output directory |
+| BONUS |---|
+| `make visual` | Print the constrained decoding steps |
+| `make test` | Run the comprehensive test suite |
 
 ---
 

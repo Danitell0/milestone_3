@@ -18,6 +18,20 @@ from .loader import load_prompts, load_functions, save_results
 from llm_sdk import Small_LLM_Model
 
 
+LOGO = r"""
+      ____        __             __                   __
+     /\  _`\     /\ \__         /\ \__               /\ \     /\/'\_/`\
+     \ \ \L\ \___\ \ ,_\    __  \ \ ,_\   ___        \ \ \    \ \      \
+      \ \ ,__/ __`\ \ \/  /'__`\ \ \ \/  / __`\       \ \ \  __\ \ \__\ \
+       \ \ \/\ \L\ \ \ \_/\ \L\.\_\ \ \_/\ \L\ \       \ \ \L\ \\ \ \_/\ \
+        \ \_\ \____/\ \__\ \__/.\_\\ \__\ \____/        \ \____/ \ \_\\ \_\
+  _______\/_/\/___/  \/__/\/__/\/_/ \/__/\/___/   _______\/___/   \/_/ \/_/
+ /\______\                                       /\______\
+ \/______/                                       \/______/
+
+    """
+
+
 def parse_args() -> argparse.Namespace:
     """Parse the command-line arguments.
 
@@ -47,6 +61,9 @@ def parse_args() -> argparse.Namespace:
                             "data/input/functions_definition.json"),
                         type=Path,
                         help="The path to the functions definitions")
+    parser.add_argument("--visualize",
+                        action="store_true",
+                        help="Print the constrained decoding steps")
     args = parser.parse_args()
 
     return args
@@ -63,17 +80,20 @@ def main() -> int:
     """
     try:
         args = parse_args()
+        if args.visualize:
+            print(LOGO, file=sys.stderr)
         prompts = load_prompts(args.input)
         functions = load_functions(args.functions_definition)
         # loading costs seconds and over a gigabyte of memory so the model
         # is built once and reused for every prompt
         model = Small_LLM_Model()
-        engine = Engine(model=model, functions=functions)
+        engine = Engine(model=model,
+                        functions=functions,
+                        visualize=args.visualize)
 
         results: list[FunctionCall] = []
         for p in prompts:
             call = engine.call(p.prompt)
-            print(f"{p.prompt} -> {call.name}", file=sys.stderr)
             results.append(call)
             save_results(results, args.output)
     except CallMeMaybeError as e:
