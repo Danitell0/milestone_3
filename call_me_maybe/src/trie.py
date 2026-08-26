@@ -43,6 +43,13 @@ class Trie(BaseModel):
         Returns:
             A Trie positioned at the root.
         """
+        for name_a, ids_a in names.items():
+            for name_b, ids_b in names.items():
+                if name_a != name_b and ids_b[:len(ids_a)] == ids_a:
+                    raise CallMeMaybeError(
+                            f"{name_a!r} is a token-level prefix of "
+                            f"{name_b!r}; the shorter name would be "
+                            f"unreachable during constrained selection.")
         root = TrieNode()
         for name, ids in names.items():
             node = root

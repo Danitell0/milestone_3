@@ -54,3 +54,19 @@ def test_name_before_a_leaf_is_an_error() -> None:
 def test_empty_catalogue_offers_nothing() -> None:
     trie = Trie.from_names({})
     assert trie.allowed() == set()
+
+
+def test_prefixing_names_are_rejected() -> None:
+    with pytest.raises(CallMeMaybeError):
+        Trie.from_names({
+            "fn_add": [8822, 2891],
+            "fn_add_numbers": [8822, 2891, 32964],
+        })
+
+
+def test_shared_prefix_without_collision_is_fine() -> None:
+    trie = Trie.from_names({
+        "fn_greet": [8822, 1889, 3744],
+        "fn_add_numbers": [8822, 2891, 32964],
+    })
+    assert trie.allowed() == {8822}
