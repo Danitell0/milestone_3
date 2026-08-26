@@ -4,7 +4,7 @@ from pathlib import Path
 import pytest
 
 from src.errors import CallMeMaybeError
-from src.loader import load_functions, load_prompts, load_vocab
+from src.loader import load_functions, load_prompts
 from src.models import JsonType
 
 
