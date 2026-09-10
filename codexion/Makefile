@@ -13,12 +13,12 @@ CFLAGS = -Wall -Werror -Wextra
 PTH = -pthread
 RM = rm -rf
 
-SRCS = main.c
+SRCS = main.c parse.c
 
 .PHONY: help all clean fclean re lint
 
 $(NAME):
-	@$(CC) $(CFLAGS) $(PTH) $(SRCS)
+	@$(CC) $(CFLAGS) $(PTH) $(SRCS) -o $(NAME)
 	@echo "${GREEN}program compiled.$(RESET)"
 
 # Commands -----------------
