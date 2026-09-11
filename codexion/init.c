@@ -6,11 +6,21 @@
 /*   By: danmorei <danmorei@student.codam.nl>        +#+                      */
 /*                                                  +#+                       */
 /*   Created: 2026/09/10 20:56:45 by danmorei     #+#    #+#                  */
-/*   Updated: 2026/09/10 21:55:38 by danmorei     ########   odam.nl          */
+/*   Updated: 2026/09/11 17:50:14 by danmorei     ########   odam.nl          */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "codexion.h"
+
+int	setup(t_table *table, char *argv[])
+{
+	init_table(table, argv);
+	if (init_dongles(table))
+		return (1);
+	if (init_coders(table))
+		return (1);// clean partial
+	return (0);
+}
 
 void init_table(t_table *table, char *argv[])
 {
