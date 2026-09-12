@@ -1,30 +1,26 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                       ::::::::             */
-/*   parse.c                                           :+:    :+:             */
+/*   time.c                                            :+:    :+:             */
 /*                                                    +:+                     */
 /*   By: danmorei <danmorei@student.codam.nl>        +#+                      */
 /*                                                  +#+                       */
-/*   Created: 2026/09/10 18:28:38 by danmorei     #+#    #+#                  */
-/*   Updated: 2026/09/12 15:17:51 by danmorei     ########   odam.nl          */
+/*   Created: 2026/09/12 11:06:50 by danmorei     #+#    #+#                  */
+/*   Updated: 2026/09/12 15:26:46 by danmorei     ########   odam.nl          */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "codexion.h"
 
-int is_valid_number(char *arg)
+long long time_now(void)
 {
-	int		i;
+	struct	timeval	tv;
 
-	i = 0;
-	if (strlen(arg) == 0 || strlen(arg) > 9)
-		return (0);
-	while (arg[i] != '\0')
-	{
-		if (arg[i] < '0' || arg[i] > '9')
-			return (0);
-		i++;
-	}
-	return (1);
+	gettimeofday(&tv, NULL);
+	return (((long long)tv.tv_sec * 1000) + ((long long)tv.tv_usec / 1000));
 }
 
+long long sim_time(long long start_time)
+{
+	return (time_now() - start_time);
+}

@@ -1,30 +1,25 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                       ::::::::             */
-/*   parse.c                                           :+:    :+:             */
+/*   log.c                                             :+:    :+:             */
 /*                                                    +:+                     */
 /*   By: danmorei <danmorei@student.codam.nl>        +#+                      */
 /*                                                  +#+                       */
-/*   Created: 2026/09/10 18:28:38 by danmorei     #+#    #+#                  */
-/*   Updated: 2026/09/12 15:17:51 by danmorei     ########   odam.nl          */
+/*   Created: 2026/09/12 15:37:27 by danmorei     #+#    #+#                  */
+/*   Updated: 2026/09/12 16:24:21 by danmorei     ########   odam.nl          */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "codexion.h"
 
-int is_valid_number(char *arg)
+void log_state(t_coder *coder, char *msg)
 {
-	int		i;
+	long long	timer;
 
-	i = 0;
-	if (strlen(arg) == 0 || strlen(arg) > 9)
-		return (0);
-	while (arg[i] != '\0')
-	{
-		if (arg[i] < '0' || arg[i] > '9')
-			return (0);
-		i++;
-	}
-	return (1);
+	if (coder->table->stop)
+		return ;
+	timer = sim_time(coder->table->start_time);
+	pthread_mutex_lock(&coder->table->log_lock);
+	printf("%lld %i %s\n", timer, coder->id, msg);
+	pthread_mutex_unlock(&coder->table->log_lock);
 }
-

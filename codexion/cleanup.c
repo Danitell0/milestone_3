@@ -1,30 +1,28 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                       ::::::::             */
-/*   parse.c                                           :+:    :+:             */
+/*   cleanup.c                                         :+:    :+:             */
 /*                                                    +:+                     */
 /*   By: danmorei <danmorei@student.codam.nl>        +#+                      */
 /*                                                  +#+                       */
-/*   Created: 2026/09/10 18:28:38 by danmorei     #+#    #+#                  */
-/*   Updated: 2026/09/12 15:17:51 by danmorei     ########   odam.nl          */
+/*   Created: 2026/09/12 12:14:01 by danmorei     #+#    #+#                  */
+/*   Updated: 2026/09/12 15:32:21 by danmorei     ########   odam.nl          */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "codexion.h"
 
-int is_valid_number(char *arg)
+int clean(t_table *table)
 {
-	int		i;
-
-	i = 0;
-	if (strlen(arg) == 0 || strlen(arg) > 9)
-		return (0);
-	while (arg[i] != '\0')
+	if (table->init_step >= STEP_CODERS)
+		free(table->coders);
+	if (table->init_step >= STEP_DONGLES)
+		free(table->dongles);
+	if (table->init_step >= STEP_SYNC)
 	{
-		if (arg[i] < '0' || arg[i] > '9')
-			return (0);
-		i++;
+		pthread_mutex_destroy(&table->lock);
+		pthread_mutex_destroy(&table->log_lock);
+		pthread_cond_destroy(&table->cond);
 	}
 	return (1);
 }
-
