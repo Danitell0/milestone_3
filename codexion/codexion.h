@@ -6,7 +6,7 @@
 /*   By: danmorei <danmorei@student.codam.nl>        +#+                      */
 /*                                                  +#+                       */
 /*   Created: 2026/09/10 18:08:20 by danmorei     #+#    #+#                  */
-/*   Updated: 2026/09/12 16:24:26 by danmorei     ########   odam.nl          */
+/*   Updated: 2026/09/13 12:10:20 by danmorei     ########   odam.nl          */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,7 +25,7 @@
 # define EDF 2
 
 # define STEP_NONE 0
-# define STEP_SYNC 1
+# define STEP_SYNC 0
 # define STEP_DONGLES 2
 # define STEP_CODERS 3
 # define STEP_HEAP 4
@@ -46,10 +46,18 @@ typedef struct s_dongle
 	long long		available_at;
 }	t_dongle;
 
+typedef struct s_request
+{
+	t_coder			*coder;
+	long long		arrival;
+}	t_request;
+
 typedef struct s_heap
 {
-
-}
+	t_request		*items;
+	int				count;
+	int				capacity;
+}	t_heap;
 
 typedef struct s_table
 {
@@ -68,7 +76,7 @@ typedef struct s_table
 	/* shared state */
 	t_dongle		*dongles;
 	t_coder			*coders;
-//	t_heap			*queue;
+	t_heap			*heap;
 	int				stop;
 
 	/* sync */

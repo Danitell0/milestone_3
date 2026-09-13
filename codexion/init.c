@@ -6,26 +6,26 @@
 /*   By: danmorei <danmorei@student.codam.nl>        +#+                      */
 /*                                                  +#+                       */
 /*   Created: 2026/09/10 20:56:45 by danmorei     #+#    #+#                  */
-/*   Updated: 2026/09/12 15:12:11 by danmorei     ########   odam.nl          */
+/*   Updated: 2026/09/13 12:00:47 by danmorei     ########   odam.nl          */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "codexion.h"
 
-int	setup(t_table *table, char *argv[])
+int	init_heap(t_table *table)
 {
-	memset(table, 0, sizeof(t_table));
-	init_table(table, argv);
-	if (init_sync(table))
-		return (clean(table));
-	table->init_step = STEP_SYNC;
-	if (init_dongles(table))
-		return (clean(table));
-	table->init_step = STEP_DONGLES;
-	if (init_coders(table))
-		return (clean(table));
-	table->init_step = STEP_CODERS;
-	table->start_time = time_now();
+	table->heap = malloc(sizeof(t_heap));
+	if (!table->heap)
+		return (print_error("Failed allocating malloc for heap."));
+	memset(table->heap, 0, sizeof(t_heap));
+	table->heap->capacity = table->n_coders;
+	table->heap->items = malloc(table->heap->capacity * sizeof(t_request));
+	if (!table->heap->items)
+	{
+		free(table->heap);
+		return (print_error("Failed allcoating malloc for the array."));
+	}
+	memset(table->heap->items, 0, sizeof(t_coders));
 	return (0);
 }
 
