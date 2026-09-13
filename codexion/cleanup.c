@@ -6,7 +6,7 @@
 /*   By: danmorei <danmorei@student.codam.nl>        +#+                      */
 /*                                                  +#+                       */
 /*   Created: 2026/09/12 12:14:01 by danmorei     #+#    #+#                  */
-/*   Updated: 2026/09/12 15:32:21 by danmorei     ########   odam.nl          */
+/*   Updated: 2026/09/13 19:29:04 by danmorei     ########   odam.nl          */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,6 +23,11 @@ int clean(t_table *table)
 		pthread_mutex_destroy(&table->lock);
 		pthread_mutex_destroy(&table->log_lock);
 		pthread_cond_destroy(&table->cond);
+	}
+	if (table->init_step >= STEP_HEAP)
+	{
+		free(table->heap->items);
+		free(table->heap);
 	}
 	return (1);
 }
