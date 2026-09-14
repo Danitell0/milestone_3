@@ -6,7 +6,7 @@
 /*   By: danmorei <danmorei@student.codam.nl>        +#+                      */
 /*                                                  +#+                       */
 /*   Created: 2026/09/10 18:08:20 by danmorei     #+#    #+#                  */
-/*   Updated: 2026/09/14 15:27:07 by danmorei     ########   odam.nl          */
+/*   Updated: 2026/09/14 20:26:36 by danmorei     ########   odam.nl          */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -95,6 +95,14 @@ int			init_dongles(t_table *table);
 int			init_coders(t_table *table);
 int			init_sync(t_table *table);
 int			init_heap(t_table *table);
+
+//Heap functions
+int			heap_push(t_table *table, t_coder *coder);
+void		heap_delete(t_table *table, int pos);
+t_coder		*heap_peek(t_table *table);
+void		heap_swap(t_request *a, t_request *b);
+void		sift_up(t_table *table, int pos);
+void		sift_down(t_table *table, int pos);
 
 //Print errors
 int			print_error(char *msg);
