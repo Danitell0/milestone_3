@@ -6,13 +6,13 @@
 /*   By: danmorei <danmorei@student.codam.nl>        +#+                      */
 /*                                                  +#+                       */
 /*   Created: 2026/09/10 18:28:38 by danmorei     #+#    #+#                  */
-/*   Updated: 2026/09/12 15:17:51 by danmorei     ########   odam.nl          */
+/*   Updated: 2026/09/14 15:05:10 by danmorei     ########   odam.nl          */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "codexion.h"
 
-int is_valid_number(char *arg)
+int	is_valid_number(char	*arg)
 {
 	int		i;
 
@@ -27,4 +27,3 @@ int is_valid_number(char *arg)
 	}
 	return (1);
 }
-

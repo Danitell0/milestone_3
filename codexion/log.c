@@ -6,13 +6,13 @@
 /*   By: danmorei <danmorei@student.codam.nl>        +#+                      */
 /*                                                  +#+                       */
 /*   Created: 2026/09/12 15:37:27 by danmorei     #+#    #+#                  */
-/*   Updated: 2026/09/12 16:24:21 by danmorei     ########   odam.nl          */
+/*   Updated: 2026/09/14 15:04:20 by danmorei     ########   odam.nl          */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "codexion.h"
 
-void log_state(t_coder *coder, char *msg)
+void	log_state(t_coder	*coder, char	*msg)
 {
 	long long	timer;
 

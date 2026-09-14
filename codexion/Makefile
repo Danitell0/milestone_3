@@ -33,18 +33,19 @@ help:
 	@echo "$(GREEN)	re	->${RESET}"
 	@echo "$(GREEN)	lint	->${RESET}"
 
-
-
-all:
+all: $(NAME)
 
 clean:
+	@echo "${RED}removing program.${RESET}"
+	@rm ./codexion
 
 fclean:
+
 
 re: fclean
 
 ## helpers -----------------
 
 lint:
-
-
+	@echo "${YELLOW}running Norminette.${RESET}"
+	@norminette

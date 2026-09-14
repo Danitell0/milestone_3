@@ -6,7 +6,7 @@
 /*   By: danmorei <danmorei@student.codam.nl>        +#+                      */
 /*                                                  +#+                       */
 /*   Created: 2026/09/10 20:56:45 by danmorei     #+#    #+#                  */
-/*   Updated: 2026/09/13 12:00:47 by danmorei     ########   odam.nl          */
+/*   Updated: 2026/09/14 15:28:14 by danmorei     ########   odam.nl          */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,11 +25,11 @@ int	init_heap(t_table *table)
 		free(table->heap);
 		return (print_error("Failed allcoating malloc for the array."));
 	}
-	memset(table->heap->items, 0, sizeof(t_coders));
+	memset(table->heap->items, 0, sizeof(t_coder));
 	return (0);
 }
 
-void init_table(t_table *table, char *argv[])
+void	init_table(t_table *table, char *argv[])
 {
 	table->n_coders = atoi(argv[1]);
 	table->t_burnout = atoi(argv[2]);
@@ -44,7 +44,7 @@ void init_table(t_table *table, char *argv[])
 		table->scheduler = EDF;
 }
 
-int init_dongles(t_table *table)
+int	init_dongles(t_table *table)
 {
 	table->dongles = malloc(table->n_coders * sizeof(t_dongle));
 	if (!table->dongles)
@@ -53,7 +53,7 @@ int init_dongles(t_table *table)
 	return (0);
 }
 
-int init_coders(t_table *table)
+int	init_coders(t_table *table)
 {
 	int	i;
 
@@ -71,20 +71,20 @@ int init_coders(t_table *table)
 	return (0);
 }
 
-int init_sync(t_table *table)
+int	init_sync(t_table *table)
 {
 	if (pthread_mutex_init(&table->lock, NULL))
-		return print_error("Failed to initiailze table mutex.");
+		return (print_error("Failed to initiailze table mutex."));
 	if (pthread_mutex_init(&table->log_lock, NULL))
 	{
 		pthread_mutex_destroy(&table->lock);
-		return print_error("Failed to initiailze table log lock.");
+		return (print_error("Failed to initiailze table log lock."));
 	}
 	if (pthread_cond_init(&table->cond, NULL))
 	{
 		pthread_mutex_destroy(&table->lock);
 		pthread_mutex_destroy(&table->log_lock);
-		return print_error("Failed to initialize condition variable.");
+		return (print_error("Failed to initialize condition variable."));
 	}
 	return (0);
 }

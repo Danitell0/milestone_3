@@ -6,7 +6,7 @@
 /*   By: danmorei <danmorei@student.codam.nl>        +#+                      */
 /*                                                  +#+                       */
 /*   Created: 2026/09/10 18:08:20 by danmorei     #+#    #+#                  */
-/*   Updated: 2026/09/13 12:10:20 by danmorei     ########   odam.nl          */
+/*   Updated: 2026/09/14 15:27:07 by danmorei     ########   odam.nl          */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,8 +35,8 @@ typedef struct s_coder
 	int				id;
 	long long		last_compile_start;
 	int				compile_count;
-	pthread_t 		thread;
-	struct	s_table	*table;
+	pthread_t		thread;
+	struct s_table	*table;
 }	t_coder;
 
 typedef struct s_dongle
@@ -71,7 +71,7 @@ typedef struct s_table
 	long long		cooldown;
 	int				scheduler;
 
-	int 			init_step;
+	int				init_step;
 
 	/* shared state */
 	t_dongle		*dongles;
@@ -89,23 +89,24 @@ typedef struct s_table
 }	t_table;
 
 //Init functions
-int setup(t_table *table, char *argv[]);
-void init_table(t_table *table, char *argv[]);
-int init_dongles(t_table *table);
-int init_coders(t_table *table);
-int init_sync(t_table *table);
+int			setup(t_table *table, char *argv[]);
+void		init_table(t_table *table, char *argv[]);
+int			init_dongles(t_table *table);
+int			init_coders(t_table *table);
+int			init_sync(t_table *table);
+int			init_heap(t_table *table);
 
 //Print errors
-int print_error(char *msg);
+int			print_error(char *msg);
 
 //Argument valudation functions
-int	is_valid_number(char *arg);
+int			is_valid_number(char *arg);
 
 //Time functions
-long long time_now(void);
-long long sim_time(long long start_time);
+long long	time_now(void);
+long long	sim_time(long long start_time);
 
 //Clean functions
-int	clean(t_table *table);
+int			clean(t_table *table);
 
 #endif
