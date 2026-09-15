@@ -13,7 +13,8 @@ CFLAGS = -Wall -Werror -Wextra
 PTH = -pthread
 RM = rm -rf
 
-SRCS = main.c parse.c init.c cleanup.c time.c heap.c heap_utils.c 
+SRCS = main.c parse.c init.c cleanup.c time.c heap.c heap_utils.c \
+       arbitration.c
 
 .PHONY: help all clean fclean re lint
 

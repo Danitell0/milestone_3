@@ -1,35 +1,14 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                       ::::::::             */
-/*   time.c                                            :+:    :+:             */
+/*   monitor.c                                         :+:    :+:             */
 /*                                                    +:+                     */
 /*   By: danmorei <danmorei@student.codam.nl>        +#+                      */
 /*                                                  +#+                       */
-/*   Created: 2026/09/12 11:06:50 by danmorei     #+#    #+#                  */
-/*   Updated: 2026/09/15 16:01:03 by danmorei     ########   odam.nl          */
+/*   Created: 2026/09/15 16:58:34 by danmorei     #+#    #+#                  */
+/*   Updated: 2026/09/15 16:58:45 by danmorei     ########   odam.nl          */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "codexion.h"
 
-long long	time_now(void)
-{
-	struct timeval	tv;
-
-	gettimeofday(&tv, NULL);
-	return (((long long)tv.tv_sec * 1000) + ((long long)tv.tv_usec / 1000));
-}
-
-long long	sim_time(long long start_time)
-{
-	return (time_now() - start_time);
-}
-
-void	sim_sleep(t_table *table, long long ms)
-{
-	long long	target;
-
-	target = sim_time(table->start_time) + ms;
-	while (sim_time(table->start_time) < target)
-		usleep(100);
-}

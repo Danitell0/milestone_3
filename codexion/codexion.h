@@ -6,7 +6,7 @@
 /*   By: danmorei <danmorei@student.codam.nl>        +#+                      */
 /*                                                  +#+                       */
 /*   Created: 2026/09/10 18:08:20 by danmorei     #+#    #+#                  */
-/*   Updated: 2026/09/14 20:26:36 by danmorei     ########   odam.nl          */
+/*   Updated: 2026/09/15 16:45:01 by danmorei     ########   odam.nl          */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,6 +34,7 @@ typedef struct s_coder
 {
 	int				id;
 	long long		last_compile_start;
+	int				granted;
 	int				compile_count;
 	pthread_t		thread;
 	struct s_table	*table;
@@ -104,11 +105,20 @@ void		heap_swap(t_request *a, t_request *b);
 void		sift_up(t_table *table, int pos);
 void		sift_down(t_table *table, int pos);
 
+//Coder
+void		*coder_routine(void *arg);
+void		coder_wait(t_table *table, t_coder *coder);
+
+//Arbitration functions
+int			can_grant(t_table *table, int id, long long now);
+
 //Print errors
 int			print_error(char *msg);
 
-//Argument valudation functions
+//Argument validation functions
 int			is_valid_number(char *arg);
+int			is_higher_priority(t_table *table, t_request *a, t_request *b);
+int			is_dongle_ok(t_table *table, int d_id, int c_id, long long now);
 
 //Time functions
 long long	time_now(void);
