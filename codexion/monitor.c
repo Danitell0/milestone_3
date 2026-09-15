@@ -6,11 +6,42 @@
 /*   By: danmorei <danmorei@student.codam.nl>        +#+                      */
 /*                                                  +#+                       */
 /*   Created: 2026/09/15 16:58:34 by danmorei     #+#    #+#                  */
-/*   Updated: 2026/09/15 17:16:40 by danmorei     ########   odam.nl          */
+/*   Updated: 2026/09/15 19:56:28 by danmorei     ########   odam.nl          */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "codexion.h"
+
+static int	check_burnout(t_table *table, long long now)
+{
+	int	i;
+
+	i = 0;
+	while (i < table->n_coders)
+	{
+		if (now - table->coders[i].last_compile_start >= table->t_burnout)
+		{
+			log_state(&table->coders[i], "burned out");
+			return (1);
+		}
+		i++;
+	}
+	return (0);
+}
+
+static int	all_done(t_table *table)
+{
+	int	i;
+
+	i = 0;
+	while (i < table->n_coders)
+	{
+		if (table->coders[i].compile_count < table->compiles_required)
+			return (0);
+		i++;
+	}
+	return (1);
+}
 
 void	*monitor(void *arg)
 {
@@ -20,16 +51,18 @@ void	*monitor(void *arg)
 
 	i = 0;
 	table = (t_table *)arg;
-	now = sim_time(table->start_time);
-	pthread_mutex_lock(&table->lock);
-	while (i < table->n_coders)
+	while (1)
 	{
-		if (now - table->coders[i].last_compile_start >= table->t_burnout)
+		pthread_mutex_lock(&table->lock);
+		now = sim_time(table->start_time);
+		if (check_burnout(table, now) || all_done(table))
 		{
-			pthread_cond_broadcast(&table->cond);
-			log_state(table->coders[i], "burned out");
 			table->stop = 1;
+			pthread_cond_broadcast(&table->cond);
+			pthread_mutex_unlock(&table->lock);
+			return (NULL);
 		}
-		i++;
+		pthread_mutex_unlock(&table->lock);
+		usleep(1000);
 	}
 }
