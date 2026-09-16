@@ -6,7 +6,7 @@
 /*   By: danmorei <danmorei@student.codam.nl>        +#+                      */
 /*                                                  +#+                       */
 /*   Created: 2026/09/10 18:08:20 by danmorei     #+#    #+#                  */
-/*   Updated: 2026/09/15 16:45:01 by danmorei     ########   odam.nl          */
+/*   Updated: 2026/09/16 12:59:13 by danmorei     ########   odam.nl          */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -79,6 +79,7 @@ typedef struct s_table
 	t_coder			*coders;
 	t_heap			*heap;
 	int				stop;
+	pthread_t		monitor;
 
 	/* sync */
 	pthread_mutex_t	lock;
@@ -108,6 +109,13 @@ void		sift_down(t_table *table, int pos);
 //Coder
 void		*coder_routine(void *arg);
 void		coder_wait(t_table *table, t_coder *coder);
+
+//Monitor
+void		*monitor_routine(void *arg);
+
+//Threads
+int			create_threads(t_table *table);
+void		join_coders(t_table *table, int count);
 
 //Arbitration functions
 int			can_grant(t_table *table, int id, long long now);

@@ -6,7 +6,7 @@
 /*   By: danmorei <danmorei@student.codam.nl>        +#+                      */
 /*                                                  +#+                       */
 /*   Created: 2026/09/15 16:58:34 by danmorei     #+#    #+#                  */
-/*   Updated: 2026/09/15 19:56:28 by danmorei     ########   odam.nl          */
+/*   Updated: 2026/09/16 12:21:10 by danmorei     ########   odam.nl          */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -43,7 +43,7 @@ static int	all_done(t_table *table)
 	return (1);
 }
 
-void	*monitor(void *arg)
+void	*monitor_routine(void *arg)
 {
 	int			i;
 	long long	now;

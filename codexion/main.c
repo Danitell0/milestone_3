@@ -6,7 +6,7 @@
 /*   By: danmorei <danmorei@student.codam.nl>        +#+                      */
 /*                                                  +#+                       */
 /*   Created: 2026/09/08 15:31:56 by danmorei     #+#    #+#                  */
-/*   Updated: 2026/09/14 15:11:17 by danmorei     ########   odam.nl          */
+/*   Updated: 2026/09/16 12:57:40 by danmorei     ########   odam.nl          */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,7 +25,16 @@ int	main(int argc, char *argv[])
 			return (print_error("Invalid numeric argument."));
 	if (strcmp(argv[8], "fifo") != 0 && strcmp(argv[8], "edf") != 0)
 		return (print_error("Invalid scheduler (ex: 'fifo'/'edf')."));
-	setup(&table, argv);
+	if (setup(&table, argv))
+		return (1);
+	if (create_threads(&table)
+	{
+		print_error("Failed creating threads.");
+		return (clean(&table));
+	}
+	join_coders(&table, table.n_coders);
+	pthread_join(table.monitor, NULL);
+	clean(&table);
 	return (0);
 }
 
