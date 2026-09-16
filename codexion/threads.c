@@ -6,7 +6,7 @@
 /*   By: danmorei <danmorei@student.codam.nl>        +#+                      */
 /*                                                  +#+                       */
 /*   Created: 2026/09/16 12:51:06 by danmorei     #+#    #+#                  */
-/*   Updated: 2026/09/16 12:57:22 by danmorei     ########   odam.nl          */
+/*   Updated: 2026/09/16 15:05:00 by danmorei     ########   odam.nl          */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,7 +14,7 @@
 
 static int	stop_and_join(t_table *table, int count)
 {
-	pyhread_mutex_lock(&table->lock);
+	pthread_mutex_lock(&table->lock);
 	table->stop = 1;
 	pthread_cond_broadcast(&table->cond);
 	pthread_mutex_unlock(&table->lock);
@@ -41,10 +41,10 @@ int	create_threads(t_table *table)
 			return stop_and_join(table, i);
 		i++;
 	}
-	if (pthread_create(table->monitor, NULL, monitor_routine, table))
+	if (pthread_create(&table->monitor, NULL, monitor_routine, table))
 	{
 		stop_and_join(table, table->n_coders);
-		pthread_join(table.monitor, NULL);
+		pthread_join(table->monitor, NULL);
 		return (1);
 	}
 	return (0);

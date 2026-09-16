@@ -6,7 +6,7 @@
 /*   By: danmorei <danmorei@student.codam.nl>        +#+                      */
 /*                                                  +#+                       */
 /*   Created: 2026/09/10 20:56:45 by danmorei     #+#    #+#                  */
-/*   Updated: 2026/09/14 15:28:14 by danmorei     ########   odam.nl          */
+/*   Updated: 2026/09/16 15:18:11 by danmorei     ########   odam.nl          */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,7 +25,7 @@ int	init_heap(t_table *table)
 		free(table->heap);
 		return (print_error("Failed allcoating malloc for the array."));
 	}
-	memset(table->heap->items, 0, sizeof(t_coder));
+	memset(table->heap->items, 0, table->heap->capacity * sizeof(t_request));
 	return (0);
 }
 

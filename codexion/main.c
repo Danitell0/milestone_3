@@ -6,7 +6,7 @@
 /*   By: danmorei <danmorei@student.codam.nl>        +#+                      */
 /*                                                  +#+                       */
 /*   Created: 2026/09/08 15:31:56 by danmorei     #+#    #+#                  */
-/*   Updated: 2026/09/16 12:57:40 by danmorei     ########   odam.nl          */
+/*   Updated: 2026/09/16 14:54:41 by danmorei     ########   odam.nl          */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,7 +27,7 @@ int	main(int argc, char *argv[])
 		return (print_error("Invalid scheduler (ex: 'fifo'/'edf')."));
 	if (setup(&table, argv))
 		return (1);
-	if (create_threads(&table)
+	if (create_threads(&table))
 	{
 		print_error("Failed creating threads.");
 		return (clean(&table));

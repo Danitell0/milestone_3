@@ -14,7 +14,7 @@ PTH = -pthread
 RM = rm -rf
 
 SRCS = main.c checkers.c init.c cleanup.c time.c heap.c heap_utils.c \
-       arbitration.c monitor.c threads.c
+       arbitration.c monitor.c threads.c dongle_utils.c log.c coder.c
 
 .PHONY: help all clean fclean re lint
 

@@ -6,7 +6,7 @@
 /*   By: danmorei <danmorei@student.codam.nl>        +#+                      */
 /*                                                  +#+                       */
 /*   Created: 2026/09/13 19:32:32 by danmorei     #+#    #+#                  */
-/*   Updated: 2026/09/14 20:21:32 by danmorei     ########   odam.nl          */
+/*   Updated: 2026/09/16 16:29:53 by danmorei     ########   odam.nl          */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,6 +30,13 @@ void	heap_delete(t_table *table, int pos)
 
 	items = table->heap->items;
 	items[pos] = items[table->heap->count - 1];
+	table->heap->count -= 1;
+	if (pos >= table->heap->count)
+		return ;
+	if (pos > 0 && is_higher_priority(table, &items[pos], &items[(pos - 1) / 2]))
+    	sift_up(table, pos);
+	else
+    	sift_down(table, pos);
 }
 
 t_coder	*heap_peek(t_table *table)

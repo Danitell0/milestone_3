@@ -6,7 +6,7 @@
 /*   By: danmorei <danmorei@student.codam.nl>        +#+                      */
 /*                                                  +#+                       */
 /*   Created: 2026/09/15 13:33:18 by danmorei     #+#    #+#                  */
-/*   Updated: 2026/09/15 16:59:13 by danmorei     ########   odam.nl          */
+/*   Updated: 2026/09/16 15:38:48 by danmorei     ########   odam.nl          */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,6 +24,7 @@ static int	compile_phase(t_table *table, t_coder *coder)
 {
 	pthread_mutex_lock(&table->lock);
 	heap_push(table, coder);
+	arbitration_pass(table);
 	coder_wait(table, coder);
 	if (table->stop)
 	{
@@ -56,7 +57,7 @@ void	*coder_routine(void *arg)
 
 	coder = (t_coder *)arg;
 	table = coder->table;
-	if (table->n_count == 1)
+	if (table->n_coders == 1)
 		lone_compile_phase(table, coder);
 	while (1)
 	{

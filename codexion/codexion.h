@@ -6,7 +6,7 @@
 /*   By: danmorei <danmorei@student.codam.nl>        +#+                      */
 /*                                                  +#+                       */
 /*   Created: 2026/09/10 18:08:20 by danmorei     #+#    #+#                  */
-/*   Updated: 2026/09/16 12:59:13 by danmorei     ########   odam.nl          */
+/*   Updated: 2026/09/16 16:04:13 by danmorei     ########   odam.nl          */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -90,7 +90,7 @@ typedef struct s_table
 	long long		start_time;
 }	t_table;
 
-//Init functions
+//Init
 int			setup(t_table *table, char *argv[]);
 void		init_table(t_table *table, char *argv[]);
 int			init_dongles(t_table *table);
@@ -98,7 +98,7 @@ int			init_coders(t_table *table);
 int			init_sync(t_table *table);
 int			init_heap(t_table *table);
 
-//Heap functions
+//Heap
 int			heap_push(t_table *table, t_coder *coder);
 void		heap_delete(t_table *table, int pos);
 t_coder		*heap_peek(t_table *table);
@@ -110,6 +110,11 @@ void		sift_down(t_table *table, int pos);
 void		*coder_routine(void *arg);
 void		coder_wait(t_table *table, t_coder *coder);
 
+//Dongles
+void		reserve_dongles(t_table *table, t_coder *coder);
+void		take_dongles(t_table *table, t_coder *coder);
+void		release_dongles(t_table *table, t_coder *coder, long long now);
+
 //Monitor
 void		*monitor_routine(void *arg);
 
@@ -117,22 +122,28 @@ void		*monitor_routine(void *arg);
 int			create_threads(t_table *table);
 void		join_coders(t_table *table, int count);
 
-//Arbitration functions
+//Arbitration
 int			can_grant(t_table *table, int id, long long now);
+void		clear_reservations(t_table *table);
+void		arbitration_pass(t_table *table);
 
 //Print errors
 int			print_error(char *msg);
 
-//Argument validation functions
+//Log
+void		log_state(t_coder *coder, char *msg);
+
+//Checkers
 int			is_valid_number(char *arg);
 int			is_higher_priority(t_table *table, t_request *a, t_request *b);
 int			is_dongle_ok(t_table *table, int d_id, int c_id, long long now);
 
-//Time functions
+//Time
 long long	time_now(void);
 long long	sim_time(long long start_time);
+void		sim_sleep(t_table *table, long long ms);
 
-//Clean functions
+//Clean
 int			clean(t_table *table);
 
 #endif

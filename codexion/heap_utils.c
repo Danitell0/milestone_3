@@ -6,7 +6,7 @@
 /*   By: danmorei <danmorei@student.codam.nl>        +#+                      */
 /*                                                  +#+                       */
 /*   Created: 2026/09/14 20:20:27 by danmorei     #+#    #+#                  */
-/*   Updated: 2026/09/14 20:21:26 by danmorei     ########   odam.nl          */
+/*   Updated: 2026/09/16 15:06:38 by danmorei     ########   odam.nl          */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,7 +30,7 @@ void	sift_up(t_table *table, int pos)
 	while (pos > 0)
 	{
 		parent = (pos - 1) / 2;
-		if (is_higher_priority(table, items[pos], items[parent]))
+		if (is_higher_priority(table, &items[pos], &items[parent]))
 		{
 			heap_swap(&items[pos], &items[parent]);
 			pos = parent;
@@ -54,9 +54,9 @@ void	sift_down(t_table *table, int pos)
 	{
 		best = left;
 		if (right < table->heap->count
-			&& is_higher_priority(table, items[right], items[left]))
+			&& is_higher_priority(table, &items[right], &items[left]))
 			best = right;
-		if (is_higher_priority(table, items[best], items[pos]))
+		if (is_higher_priority(table, &items[best], &items[pos]))
 		{
 			heap_swap(&items[pos], &items[best]);
 			pos = best;
