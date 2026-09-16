@@ -6,7 +6,7 @@
 /*   By: danmorei <danmorei@student.codam.nl>        +#+                      */
 /*                                                  +#+                       */
 /*   Created: 2026/09/15 16:58:34 by danmorei     #+#    #+#                  */
-/*   Updated: 2026/09/16 12:21:10 by danmorei     ########   odam.nl          */
+/*   Updated: 2026/09/16 20:28:44 by danmorei     ########   odam.nl          */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -45,11 +45,9 @@ static int	all_done(t_table *table)
 
 void	*monitor_routine(void *arg)
 {
-	int			i;
 	long long	now;
 	t_table		*table;
 
-	i = 0;
 	table = (t_table *)arg;
 	while (1)
 	{
@@ -62,6 +60,8 @@ void	*monitor_routine(void *arg)
 			pthread_mutex_unlock(&table->lock);
 			return (NULL);
 		}
+		arbitration_pass(table);
+		pthread_cond_broadcast(&table->cond);
 		pthread_mutex_unlock(&table->lock);
 		usleep(1000);
 	}
