@@ -6,7 +6,7 @@
 /*   By: danmorei <danmorei@student.codam.nl>        +#+                      */
 /*                                                  +#+                       */
 /*   Created: 2026/09/10 18:28:38 by danmorei     #+#    #+#                  */
-/*   Updated: 2026/09/16 21:02:41 by danmorei     ########   odam.nl          */
+/*   Updated: 2026/09/17 19:27:37 by danmorei     ########   odam.nl          */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,7 +26,7 @@ static int	compare_edf(t_table *table, t_request *a, t_request *b)
 	return (a->coder->id < b->coder->id);
 }
 
-static int compare_fifo(t_request *a, t_request *b)
+static int	compare_fifo(t_request *a, t_request *b)
 {
 	if (a->arrival != b->arrival)
 		return (a->arrival < b->arrival);
