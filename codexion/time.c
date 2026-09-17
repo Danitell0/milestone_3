@@ -6,7 +6,7 @@
 /*   By: danmorei <danmorei@student.codam.nl>        +#+                      */
 /*                                                  +#+                       */
 /*   Created: 2026/09/12 11:06:50 by danmorei     #+#    #+#                  */
-/*   Updated: 2026/09/15 16:01:03 by danmorei     ########   odam.nl          */
+/*   Updated: 2026/09/17 16:24:10 by danmorei     ########   odam.nl          */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,11 +25,23 @@ long long	sim_time(long long start_time)
 	return (time_now() - start_time);
 }
 
-void	sim_sleep(t_table *table, long long ms)
+int	sim_sleep(t_table *table, long long ms)
 {
 	long long	target;
+	int			stop;
 
 	target = sim_time(table->start_time) + ms;
 	while (sim_time(table->start_time) < target)
+	{
+		pthread_mutex_lock(&table->lock);
+		stop = table->stop;
+		pthread_mutex_unlock(&table->lock);
+		if (stop)
+		{
+			break ;
+			return (1);
+		}
 		usleep(100);
+	}
+	return (0);
 }

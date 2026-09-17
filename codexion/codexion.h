@@ -6,7 +6,7 @@
 /*   By: danmorei <danmorei@student.codam.nl>        +#+                      */
 /*                                                  +#+                       */
 /*   Created: 2026/09/10 18:08:20 by danmorei     #+#    #+#                  */
-/*   Updated: 2026/09/16 16:04:13 by danmorei     ########   odam.nl          */
+/*   Updated: 2026/09/17 16:24:34 by danmorei     ########   odam.nl          */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -141,7 +141,7 @@ int			is_dongle_ok(t_table *table, int d_id, int c_id, long long now);
 //Time
 long long	time_now(void);
 long long	sim_time(long long start_time);
-void		sim_sleep(t_table *table, long long ms);
+int			sim_sleep(t_table *table, long long ms);
 
 //Clean
 int			clean(t_table *table);

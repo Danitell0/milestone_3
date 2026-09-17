@@ -6,7 +6,7 @@
 /*   By: danmorei <danmorei@student.codam.nl>        +#+                      */
 /*                                                  +#+                       */
 /*   Created: 2026/09/15 13:33:18 by danmorei     #+#    #+#                  */
-/*   Updated: 2026/09/16 15:38:48 by danmorei     ########   odam.nl          */
+/*   Updated: 2026/09/17 16:39:37 by danmorei     ########   odam.nl          */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,14 +23,14 @@ static void	lone_compile_phase(t_table *table, t_coder *coder)
 static int	compile_phase(t_table *table, t_coder *coder)
 {
 	pthread_mutex_lock(&table->lock);
-	heap_push(table, coder);
-	arbitration_pass(table);
-	coder_wait(table, coder);
 	if (table->stop)
 	{
 		pthread_mutex_unlock(&table->lock);
 		return (1);
 	}
+	heap_push(table, coder);
+	arbitration_pass(table);
+	coder_wait(table, coder);
 	coder->granted = 0;
 	log_state(coder, "has taken a dongle");
 	log_state(coder, "has taken a dongle");
@@ -42,6 +42,11 @@ static int	compile_phase(t_table *table, t_coder *coder)
 static void	debug_phase(t_table *table, t_coder *coder)
 {
 	pthread_mutex_lock(&table->lock);
+	if (table->stop)
+	{
+		pthread_mutex_unlock(&table->lock);
+		return ;
+	}
 	coder->compile_count += 1;
 	release_dongles(table, coder, sim_time(table->start_time));
 	arbitration_pass(table);
@@ -63,13 +68,16 @@ void	*coder_routine(void *arg)
 	{
 		if (compile_phase(table, coder))
 			return (NULL);
-		sim_sleep(table, table->t_compile);
+		if (sim_sleep(table, table->t_compile))
+			return (NULL);
 		debug_phase(table, coder);
-		sim_sleep(table, table->t_debug);
+		if (sim_sleep(table, table->t_debug))
+			return (NULL);
 		pthread_mutex_lock(&table->lock);
 		log_state(coder, "is refactoring");
 		pthread_mutex_unlock(&table->lock);
-		sim_sleep(table, table->t_refactor);
+		if (sim_sleep(table, table->t_refactor))
+			return (NULL);
 	}
 }
 

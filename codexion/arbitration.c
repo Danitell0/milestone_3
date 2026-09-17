@@ -6,7 +6,7 @@
 /*   By: danmorei <danmorei@student.codam.nl>        +#+                      */
 /*                                                  +#+                       */
 /*   Created: 2026/09/15 11:10:57 by danmorei     #+#    #+#                  */
-/*   Updated: 2026/09/16 20:44:37 by danmorei     ########   odam.nl          */
+/*   Updated: 2026/09/17 16:41:59 by danmorei     ########   odam.nl          */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -49,21 +49,6 @@ void	arbitration_pass(t_table *table)
 	clear_reservations(table);
 	head = heap_peek(table);
 	items = table->heap->items;
-
-	fprintf(stderr, "[%lld] count=%d head=%d(dl=%lld)\n", now,
-		table->heap->count, head ? head->id : 0,
-		head ? head->last_compile_start + table->t_burnout : -1);
-	i = 0;
-	while (i < table->heap->count)
-	{
-		fprintf(stderr, "    [%d] coder=%d dl=%lld arr=%lld\n", i,
-			items[i].coder->id,
-			items[i].coder->last_compile_start + table->t_burnout,
-			items[i].arrival);
-		i++;
-	}
-	i = 0;
-
 	if (head && !can_grant(table, head->id, now))
 		reserve_dongles(table, head);
 	while (i < table->heap->count)
