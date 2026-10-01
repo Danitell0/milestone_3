@@ -53,8 +53,15 @@ class MapParser:
                              f"values")
         self.nb_drones = nb_drones
 
-    def _parse_zone(self, line: str):
-        ...
+    def _parse_zone(self, prefix: str, line: str) -> None:
+        setting = line.partition('[')
+        params = setting[0].split()
+        if len(params) != 3:
+            raise FlyInError("Expected 'name x y'.")
+        try:
+            name, x, y = params[0], int(params[1]), int(params[2])
+        except ValueError:
+            raise FlyInError("Coordinates must be integers.")
 
     def _parse_connection:
         ...
