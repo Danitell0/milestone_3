@@ -9,6 +9,7 @@ class MapParser:
         self.settings = {}
 
         self.nb_drones: int = 0
+        self.zones: dict[str, Zone] = {}
 
     def read_map(self) -> Map:
         try:
@@ -62,10 +63,29 @@ class MapParser:
             name, x, y = params[0], int(params[1]), int(params[2])
         except ValueError:
             raise FlyInError("Coordinates must be integers.")
+        if "-" in name:
+            raise FlyInError("'-': Invalid character for name.")
+        if name in self.zones:
+            raise FlyInError(f"Duplicate rejected: '{name}' is "
+                             f"already defined as a zone.")
+        if setting[1] == "[" and setting[2].endswith("]"):
+            _parse_metadata(setting[2])
+
 
     def _parse_connection:
         ...
 
-    def _parse_metadata(self, line: str) -> dict[str, str]:
-
+    @staticmethod
+    def _parse_metadata(line: str) -> dict[str, str]:
+        metadata: dict[str, str] = {}
+        tags = line.strip().removesuffix("]").split()
+        for tag in tags:
+            setting = tag.partition("=")
+            if not all(setting):
+                raise FlyInError(f"'{tag}': Invalid syntax for metadata.")
+            if setting[0] in metadata:
+                raise FlyInError(f"Duplicate rejected: '{setting[0]}' "
+                                 f"already exists in the metadata.")
+            metadata[setting[0]] = setting[2]
+        return metadata
 
