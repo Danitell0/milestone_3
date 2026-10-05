@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Optional
 
 from .errors import FlyInError
 from .network import Map
@@ -10,6 +11,9 @@ class MapParser:
 
         self.nb_drones: int = 0
         self.zones: dict[str, Zone] = {}
+
+        self.is_start = False
+        self.is_end = False
 
     def read_map(self) -> Map:
         try:
@@ -68,8 +72,54 @@ class MapParser:
         if name in self.zones:
             raise FlyInError(f"Duplicate rejected: '{name}' is "
                              f"already defined as a zone.")
-        if setting[1] == "[" and setting[2].endswith("]"):
-            _parse_metadata(setting[2])
+
+        zone_role = ZoneRole(prefix)
+        if zone_role == ZoneRole.START:
+            if self.is_start:
+                raise FlyInError("Starting point was already defined.")
+            self.is_start = True
+        elif zone_role == ZoneRole.END:
+            if self.is_end:
+                raise FlyInError("Ending point was already defined.")
+            self.is_end = True
+
+
+        metadata: dict[str, str] = {}
+        zone_type = ZoneType.NORMAL
+        max_drones = 1
+        color: Optional[str] = None
+
+        if setting[1] == "[":
+            if not setting[2].strip().endswith(']'):
+                raise FlyInError(f"'{setting[2]}': Invalid syntax.")
+            allowed_fields = {'zone', 'color', 'max_drones'}
+            metadata = self._parse_metadata(setting[2])
+            if not metadata.keys() <= allowed_fields:
+                raise FlyInError(f"'{metadata.keys() - allowed_fields}': "
+                                 f"Invalid tag in metadata.")
+            try:
+                if "zone" in metadata:
+                    zone_type = ZoneType(metadata["zone"])
+            except ValueError:
+                raise FlyInError(f"'{metadata['zone']}': "
+                                 f"Unknown type of zone.")
+            try:
+                if zone_role == ZoneRole.HUB:
+                    if "max_drones" in metadata:
+                        max_drones = int(metadata["max_drones"])
+            except ValueError:
+                raise FlyInError("max_drones must be an integer.")
+            if max_drones <= 0:
+                raise FlyInError("max_drones must be greater than 0.")
+            if "color" in metadata:
+                color = metadata["color"]
+
+        self.zones[name] = Zone(name, 
+                                x, y,
+                                zone_role,
+                                zone_type,
+                                color,
+                                max_drones)
 
 
     def _parse_connection:
