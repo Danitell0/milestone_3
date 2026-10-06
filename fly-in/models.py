@@ -6,6 +6,8 @@ With each role and type in smaller Enum classes.
 from enum import Enum
 from typing import Optional
 
+from .errors import FlyInError
+
 
 class ZoneType(Enum):
     """Parameter types for type for each zone.
@@ -72,3 +74,38 @@ class Connection:
         self.zone_a = zone_a
         self.zone_b = zone_b
         self.max_link_capacity = max_link_capacity
+
+
+class Map:
+    """Build a network of zones and connections.
+
+    Attributes:
+        nb_drones: number of drones in the simulation.
+        zones: dictionary of zones in the map with the name as a key.
+        connections: dictionary of connections in the map with the zones
+            keyed by the alphabetically ordered pair of zone names.
+    """
+    def __init__(self, nb_drones: int,
+                 zones: dict[str, Zone],
+                 connections: dict[tuple[str, str], Connection]) -> None:
+        self.nb_drones = nb_drones
+        self.zones = zones
+        self.connections = connections
+
+        start: Optional[Zone] = None
+        end: Optional[Zone] = None
+        for zone in self.zones.values():
+            if zone.zone_role == ZoneRole.START:
+                start = zone
+            elif zone.zone_role == ZoneRole.END:
+                end = zone
+
+        if not start:
+            raise FlyInError("Error: Impossible to generate Map with no "
+                             "starting point.")
+        self.start: Optional[Zone] = start
+        if not end:
+            raise FlyInError("Error: Impossible to generate Map with no "
+                             "ending point.")
+        self.end: Optional[Zone] = end
+
