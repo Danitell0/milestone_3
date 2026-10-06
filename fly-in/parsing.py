@@ -1,6 +1,7 @@
 from pathlib import Path
 from typing import Optional
 
+from .models import Zone, ZoneRole, ZoneType, Connection
 from .errors import FlyInError
 from .network import Map
 
@@ -11,6 +12,7 @@ class MapParser:
 
         self.nb_drones: int = 0
         self.zones: dict[str, Zone] = {}
+        self.connections: dict[tuple[str, str], Connection] - {}
 
         self.is_start = False
         self.is_end = False
@@ -60,7 +62,7 @@ class MapParser:
 
     def _parse_zone(self, prefix: str, line: str) -> None:
         setting = line.partition('[')
-        params = setting[0].split()
+        params =setting[0].split()
         if len(params) != 3:
             raise FlyInError("Expected 'name x y'.")
         try:
@@ -122,8 +124,50 @@ class MapParser:
                                 max_drones)
 
 
-    def _parse_connection:
-        ...
+    def _parse_connection(self, line: str) -> None:
+        setting = line.partition("[")
+        zone = setting[0].split("-")
+        if len(zone) != 2:
+            raise FlyInError("Expected 'zone_1-zone_2'.")
+        zone_a, zone_b = zone[0].strip(), zone[1].strip()
+        if not zone_a or not zone_b:
+            raise FlyInError("Zones must not be an empty name.")
+        if zone_a not in self.zones:
+            raise FlyInError(f"'{zone_a}': No zone defined.")
+        elif zone_b not in self.zones:
+            raise FlyInError(f"'{zone_b}': No zone defined.")
+        elif zone_a == zone_b:
+            raise FlyInError("Impossible to connect the same zone.")
+
+        # same key for a-b and b-a
+        key = (min(zone_a, zone_b), max(zone_a, zone_b))
+        if key in self.connections:
+            raise FlyInError(f"'{zone_a}-{zone_b}': Connection already"
+                             f" defined.")
+
+        metadata: dict[str, str] = {}
+        max_link_capacity = 1
+
+        if setting[1] == "[":
+            if not setting[2].strip().endswith(']'):
+                raise FlyInError(f"'{setting[2]}': Invalid syntax.")
+            metadata = self._parse_metadata(setting[2])
+            if not metadata.keys() <= {"max_link_capacity"}:
+                raise FlyInError(f"'{metadata.keys() - {'max_link_capacity'}}"
+                                 f"': Invalid tag in metadata.")
+            try:
+                if "max_link_capacity" in metadata:
+                    max_link_capacity = int(metadata["max_link_capacity"])
+            except ValueError:
+                raise FlyInError("max_link_capacity must be an integer.")
+            if max_link_capacity <= 0:
+                raise FlyInError(
+                        "max_link_capacity must be a positive value.")
+
+        self.connections[key] = Connection(self.zones[zone_a],
+                                           self.zones[zone_b],
+                                           max_link_capacity)
+
 
     @staticmethod
     def _parse_metadata(line: str) -> dict[str, str]:
