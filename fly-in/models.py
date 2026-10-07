@@ -45,7 +45,7 @@ class Zone:
         zone_type: type of the zone (normal, blocked, priority or restricted),
             if not defined it will be defaulted to NORMAL.
         color: an optional parameter to define the color of the zone.
-        max_drones: Max number of drones allowed in the zone simultanious,
+        max_drones: Max number of drones allowed in the zone simultaneously,
             if not defined it will be defaulted to 1.
     """
     def __init__(self, name: str, x: int, y: int,
@@ -58,6 +58,13 @@ class Zone:
         self.zone_type = zone_type
         self.color = color
         self.max_drones = max_drones
+
+    @property
+    def cost(self) -> int:
+        """Cost of moving INTO this zone, in turns."""
+        if self.zone_type == ZoneType.RESTRICTED:
+            return 2
+        return 1
 
 
 class Connection:
