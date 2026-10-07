@@ -3,6 +3,7 @@ import argparse
 from parsing import MapParser
 from errors import FlyInError
 
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
             description=("Route a fleet of drones from start to end through a"
@@ -16,6 +17,7 @@ def parse_args() -> argparse.Namespace:
     args = parser.parse_args()
 
     return args
+
 
 def main() -> None:
     try:

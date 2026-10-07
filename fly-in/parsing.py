@@ -4,6 +4,7 @@ from typing import Optional
 from models import Zone, ZoneRole, ZoneType, Connection, Map
 from errors import FlyInError
 
+
 class MapParser:
     def __init__(self, map_path: Path) -> None:
         self.map_path = map_path
@@ -72,7 +73,7 @@ class MapParser:
 
     def _parse_zone(self, prefix: str, line: str) -> None:
         setting = line.partition('[')
-        params =setting[0].split()
+        params = setting[0].split()
         if len(params) != 3:
             raise FlyInError("Expected 'name x y'.")
         try:
@@ -94,7 +95,6 @@ class MapParser:
             if self.is_end:
                 raise FlyInError("Ending point was already defined.")
             self.is_end = True
-
 
         metadata: dict[str, str] = {}
         zone_type = ZoneType.NORMAL
@@ -126,13 +126,12 @@ class MapParser:
             if "color" in metadata:
                 color = metadata["color"]
 
-        self.zones[name] = Zone(name, 
+        self.zones[name] = Zone(name,
                                 x, y,
                                 zone_role,
                                 zone_type,
                                 color,
                                 max_drones)
-
 
     def _parse_connection(self, line: str) -> None:
         setting = line.partition("[")
@@ -178,7 +177,6 @@ class MapParser:
                                            self.zones[zone_b],
                                            max_link_capacity)
 
-
     @staticmethod
     def _parse_metadata(line: str) -> dict[str, str]:
         metadata: dict[str, str] = {}
@@ -192,4 +190,3 @@ class MapParser:
                                  f"already exists in the metadata.")
             metadata[setting[0]] = setting[2]
         return metadata
-

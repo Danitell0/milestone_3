@@ -127,4 +127,3 @@ class Map:
                     connection.zone_a, connection))
 
         self.neighbours = neighbours
-
