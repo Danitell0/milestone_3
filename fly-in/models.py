@@ -6,7 +6,7 @@ With each role and type in smaller Enum classes.
 from enum import Enum
 from typing import Optional
 
-from .errors import FlyInError
+from errors import FlyInError
 
 
 class ZoneType(Enum):
@@ -84,6 +84,9 @@ class Map:
         zones: dictionary of zones in the map with the name as a key.
         connections: dictionary of connections in the map with the zones
             keyed by the alphabetically ordered pair of zone names.
+        start: starting zone of the map.
+        end: ending zone of the map.
+        neighbours: a dictionary to connect the zone to its neighbour zones.
     """
     def __init__(self, nb_drones: int,
                  zones: dict[str, Zone],
@@ -100,12 +103,28 @@ class Map:
             elif zone.zone_role == ZoneRole.END:
                 end = zone
 
-        if not start:
+        if start is None:
             raise FlyInError("Error: Impossible to generate Map with no "
                              "starting point.")
-        self.start: Optional[Zone] = start
-        if not end:
+        self.start = start
+        if end is None:
             raise FlyInError("Error: Impossible to generate Map with no "
                              "ending point.")
-        self.end: Optional[Zone] = end
+        self.end = end
+
+        self._build_neighbours()
+
+    def _build_neighbours(self) -> None:
+        """Connect each zone to its neighbours."""
+        neighbours: dict[str, list[tuple[Zone, Connection]]] = {
+                name: [] for name in self.zones
+                }
+
+        for connection in self.connections.values():
+            neighbours[connection.zone_a.name].append((
+                    connection.zone_b, connection))
+            neighbours[connection.zone_b.name].append((
+                    connection.zone_a, connection))
+
+        self.neighbours = neighbours
 

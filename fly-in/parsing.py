@@ -1,18 +1,16 @@
 from pathlib import Path
 from typing import Optional
 
-from .models import Zone, ZoneRole, ZoneType, Connection
-from .errors import FlyInError
-from .network import Map
+from models import Zone, ZoneRole, ZoneType, Connection, Map
+from errors import FlyInError
 
 class MapParser:
     def __init__(self, map_path: Path) -> None:
         self.map_path = map_path
-        self.settings = {}
 
         self.nb_drones: int = 0
         self.zones: dict[str, Zone] = {}
-        self.connections: dict[tuple[str, str], Connection] - {}
+        self.connections: dict[tuple[str, str], Connection] = {}
 
         self.is_start = False
         self.is_end = False
@@ -56,9 +54,9 @@ class MapParser:
                 else:
                     raise FlyInError("nb_drones already defined.")
             case "connection":
-                self.settings[setting[0]] = self._parse_metadata(setting[2])
+                self._parse_connection(setting[2])
             case "start_hub" | "hub" | "end_hub":
-                self.settings[setting[0]] = self._parse_metadata(setting[2])
+                self._parse_zone(setting[0], setting[2])
             case _:
                 raise FlyInError(f"'{setting[0]}': Unknown prefix.")
 
