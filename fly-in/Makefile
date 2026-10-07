@@ -5,8 +5,8 @@ YELLOW = \033[1;93m
 RESET = \033[0m
 
 # Tools ----------
-
-PY = python3
+UV = uv
+PY = $(UV) run python3
 MAP = maps/easy/01_linear_path.txt
 
 .PHONY: help install run debug clean lint lint-strict
@@ -16,6 +16,7 @@ MAP = maps/easy/01_linear_path.txt
 help:
 
 install:
+	$(UV) sync
 
 run:
 	@echo "$(GREEN)Running program with $(MAP) file.$(RESET)"
@@ -34,14 +35,12 @@ clean:
 	@rm -rf .mypy_cache .pytest_cache .ruff_cache
 
 lint:
-	@flake8 .
+	@$(UV) run flake8 . --exclude=venv,.venv
 	@echo "flake8... $(GREEN)Success.$(RESET)"
-	@mypy . --warn-return-any --warn-unused-ignores --ignore-missing-imports \
+	@$(UV) run mypy . --warn-return-any --warn-unused-ignores --ignore-missing-imports \
 		--disallow-untyped-defs --check-untyped-defs
 	@echo "mypy... $(GREEN)Success.$(RESET)"
 
 lint-strict:
-	@mypy . --strict
+	@$(UV) run mypy . --strict
 	@echo "mypy --strict... $(GREEN)Success.$(RESET)"
-
-
