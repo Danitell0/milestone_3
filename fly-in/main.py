@@ -2,6 +2,7 @@ import argparse
 
 from parsing import MapParser
 from errors import FlyInError
+from pathfinder import PathFinder
 
 
 def parse_args() -> argparse.Namespace:
@@ -24,8 +25,9 @@ def main() -> None:
         args = parse_args()
         parser = MapParser(args.map_path)
         net = parser.read_map()
-        print(net.nb_drones)
-        print(net.start.name, net.end.name)
+        distances = PathFinder(net).compute_distances()
+        for zone_name, turns in sorted(distances.items(), key=lambda item: item[1]):
+            print(f"{zone_name:>20} : {turns}")
     except FlyInError as e:
         print(e)
         exit(1)

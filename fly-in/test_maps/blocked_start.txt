@@ -1,0 +1,14 @@
+# Invalid: the only route from start passes through a blocked zone
+nb_drones: 2
+
+start_hub: start 0 0 [color=green]
+hub: wall 1 0 [zone=blocked color=gray]
+#hub: detour 1 1 [color=blue]
+end_hub: goal 2 0 [color=yellow]
+
+connection: start-wall
+connection: wall-goal
+#connection: start-detour
+#connection: detour-goal
+
+# Clear the comments to start detour
