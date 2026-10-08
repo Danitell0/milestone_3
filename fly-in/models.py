@@ -87,6 +87,10 @@ class Connection:
         return (min(self.zone_a.name, self.zone_b.name),
                 max(self.zone_a.name, self.zone_b.name))
 
+    @property
+    def name(self) -> str:
+        return f"{self.zone_a}-{self.zone_b}"
+
 
 class Map:
     """Build a network of zones and connections.
