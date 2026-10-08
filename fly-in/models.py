@@ -82,6 +82,11 @@ class Connection:
         self.zone_b = zone_b
         self.max_link_capacity = max_link_capacity
 
+    @property
+    def key(self) -> tuple[str, str]:
+        return (min(self.zone_a.name, self.zone_b.name),
+                max(self.zone_a.name, self.zone_b.name))
+
 
 class Map:
     """Build a network of zones and connections.
