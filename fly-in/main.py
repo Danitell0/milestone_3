@@ -3,7 +3,8 @@ import argparse
 from parsing import MapParser
 from errors import FlyInError
 from pathfinder import PathFinder
-
+from simulation import Simulation
+from output import TextPrinter
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
@@ -26,8 +27,14 @@ def main() -> None:
         parser = MapParser(args.map_path)
         net = parser.read_map()
         distances = PathFinder(net).compute_distances()
-        for zone_name, turns in sorted(distances.items(), key=lambda item: item[1]):
-            print(f"{zone_name:>20} : {turns}")
+        simulation = Simulation(net, distances)
+        printer = TextPrinter()
+
+        while not simulation.is_finished():
+            if simulation.turn >= 10000:
+                raise FlyInError("Error: Simulation did not finish.")
+            moves = simulation.step()
+            print(printer.format_turn(moves))
     except FlyInError as e:
         print(e)
         exit(1)
