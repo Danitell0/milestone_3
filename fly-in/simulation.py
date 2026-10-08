@@ -1,6 +1,6 @@
 from errors import FlyInError
-from drone import Drone, DroneState, Move, ZoneMove
-from models import Map, Zone, ZoneRole, Connection
+from drone import Drone, DroneState, Move, ZoneMove, ConnectionMove
+from models import Map, Zone, ZoneRole, ZoneType, Connection
 
 
 class Simulation:
@@ -27,7 +27,8 @@ class Simulation:
                 drone.turns_remaining -= 1
                 landing_zone = drone.destination
                 if landing_zone is None:
-                    raise FlyInError(f"{drone.name} missing destination zone")
+                    raise FlyInError(
+                            f"{drone.drone_id} missing destination zone")
 
                 if drone.turns_remaining == 0:
                     drone.zone = landing_zone
@@ -39,6 +40,28 @@ class Simulation:
                     drone.connection = None
                     drone.destination = None
                 continue
+            # if drone.state == IN_ZONE
+            candidates = self._ranked_options(drone)
+            if not candidates:
+                continue
+            best_score, _, _ = candidates[0]
+            for score, new_zone, connection in candidates:
+                if not (self._zone_has_room(new_zone) and
+                        self._link_has_room(connection)):
+                    continue
+                elif score < best_score + 1:
+                    moves.append(
+                            self._move_drone(drone, new_zone, connection))
+                break
+
+        # deliver drones to END
+        for drone in self.active_drones:
+            if drone.zone is self.network.end:
+                drone.state = DroneState.DELIVERED
+        self.active_drones = [drone for drone in self.active_drones if
+                              drone.zone is not self.network.end]
+
+        self.turn += 1
         return moves
 
     def _turns_left(self, drone: Drone) -> int:
@@ -52,8 +75,7 @@ class Simulation:
                          f"inconsistent state {drone.state}.")
 
     def is_finished(self) -> bool:
-        # check if there is drones left
-        ...
+        return not self.active_drones
 
     def _count_occupancy(self) -> None:
         self.zone_load = {}
@@ -97,4 +119,26 @@ class Simulation:
 
             candidates.sort(key=lambda item: item[0])
         return candidates
+
+    def _move_drone(self, drone: Drone,
+                    new_zone: Zone,
+                    connection: Connection) -> Move:
+        old_zone = drone.zone
+        if old_zone is None:
+            raise FlyInError(f"{drone.drone_id} missing current zone")
+        self.zone_load[old_zone.name] -= 1
+        self.zone_load[new_zone.name] = self.zone_load.get(new_zone.name,
+                                                           0) + 1
+        link_key = connection.key
+        self.link_load[link_key] = self.link_load.get(link_key, 0) + 1
+        if new_zone.zone_type == ZoneType.RESTRICTED:
+            drone.state = DroneState.IN_FLIGHT
+            drone.zone = None
+            drone.connection = connection
+            drone.destination = new_zone
+            drone.turns_remaining = new_zone.cost - 1
+            return ConnectionMove(drone, connection)
+        else:
+            drone.zone = new_zone
+            return ZoneMove(drone, new_zone)
 
