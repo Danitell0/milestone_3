@@ -74,7 +74,7 @@ class Connection:
         zone_a: first zone of the connection.
         zone_b: second zone of the connection.
         max_link_capacity: number of drones allowed to traverse this
-            connection simultanious.
+            connection simultaneously.
     """
     def __init__(self, zone_a: Zone, zone_b: Zone,
                  max_link_capacity: int = 1) -> None:
@@ -89,7 +89,7 @@ class Connection:
 
     @property
     def name(self) -> str:
-        return f"{self.zone_a}-{self.zone_b}"
+        return f"{self.zone_a.name}-{self.zone_b.name}"
 
 
 class Map:
