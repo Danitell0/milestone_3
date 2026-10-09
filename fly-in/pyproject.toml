@@ -7,7 +7,9 @@ authors = [
     { name = "Daniel Filipe Moreira Fernandes", email = "danmorei@student.codam.nl" }
 ]
 requires-python = ">=3.10"
-dependencies = []
+dependencies = [
+    "pygame-ce>=2.5.8",
+]
 
 [dependency-groups]
 dev = [

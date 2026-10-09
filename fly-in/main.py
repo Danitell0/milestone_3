@@ -6,6 +6,7 @@ from errors import FlyInError
 from pathfinder import PathFinder
 from simulation import Simulation
 from output import ColorPrinter
+from visual import Visualizer
 
 MAX_TURNS = 10000
 
@@ -33,6 +34,14 @@ def main() -> None:
         distances = PathFinder(net).compute_distances()
         simulation = Simulation(net, distances)
         printer = ColorPrinter()
+
+        # debug section
+
+        if args.visual:
+            Visualizer(net).run()
+            return
+
+        # end debug section
 
         while not simulation.is_finished():
             if simulation.turn >= MAX_TURNS:
