@@ -1,10 +1,14 @@
 import argparse
+import sys
 
 from parsing import MapParser
 from errors import FlyInError
 from pathfinder import PathFinder
 from simulation import Simulation
-from output import TextPrinter
+from output import ColorPrinter
+
+MAX_TURNS = 10000
+
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
@@ -28,16 +32,21 @@ def main() -> None:
         net = parser.read_map()
         distances = PathFinder(net).compute_distances()
         simulation = Simulation(net, distances)
-        printer = TextPrinter()
+        printer = ColorPrinter()
 
         while not simulation.is_finished():
-            if simulation.turn >= 10000:
-                raise FlyInError("Error: Simulation did not finish.")
+            if simulation.turn >= MAX_TURNS:
+                raise FlyInError("Simulation did not finish.")
             moves = simulation.step()
             print(printer.format_turn(moves))
+        print(f"Simulation finished in {simulation.turn} turns.",
+              file=sys.stderr)
     except FlyInError as e:
-        print(e)
-        exit(1)
+        print(f"Error: {e}", file=sys.stderr)
+        sys.exit(1)
+    except Exception as e:
+        print(f"Internal error: {e}", file=sys.stderr)
+        sys.exit(1)
 
 
 if __name__ == "__main__":

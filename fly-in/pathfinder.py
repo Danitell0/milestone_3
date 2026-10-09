@@ -3,6 +3,7 @@ import heapq
 from errors import FlyInError
 from models import Map, ZoneType
 
+
 class PathFinder:
     def __init__(self, network: Map) -> None:
         self.network = network
@@ -29,4 +30,3 @@ class PathFinder:
             raise FlyInError("Starting point is unreachable.")
 
         return distances
-

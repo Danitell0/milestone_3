@@ -62,6 +62,7 @@ class Simulation:
                               drone.zone is not self.network.end]
 
         self.turn += 1
+        self._check_capacity()
         return moves
 
     def _turns_left(self, drone: Drone) -> int:
@@ -142,3 +143,20 @@ class Simulation:
             drone.zone = new_zone
             return ZoneMove(drone, new_zone)
 
+    def _check_capacity(self) -> None:
+        for zone, load in self.zone_load.items():
+            curr_zone = self.network.zones[zone]
+
+            if curr_zone.zone_role in (ZoneRole.START, ZoneRole.END):
+                continue
+            if load > curr_zone.max_drones:
+                raise RuntimeError(
+                        f"Number of drones in {curr_zone.name} "
+                        f"passes its own limit on turn {self.turn}.")
+        for link, load in self.link_load.items():
+            curr_connection = self.network.connections[link]
+
+            if load > curr_connection.max_link_capacity:
+                raise RuntimeError(
+                        f"Number of drones in {curr_connection.name}"
+                        f" passes its own limit on turn {self.turn}.")

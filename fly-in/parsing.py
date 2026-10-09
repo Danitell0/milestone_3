@@ -34,11 +34,11 @@ class MapParser:
                     raise FlyInError(f"Error line {line_nb}: {e}")
 
         if self.nb_drones == 0:
-            raise FlyInError("Error: nb_drones was never defined.")
+            raise FlyInError("nb_drones was never defined.")
         elif not self.is_start:
-            raise FlyInError("Error: Missing start_hub.")
+            raise FlyInError("Missing start_hub.")
         elif not self.is_end:
-            raise FlyInError("Error: Missing end_hub.")
+            raise FlyInError("Missing end_hub.")
 
         return Map(self.nb_drones, self.zones, self.connections)
 

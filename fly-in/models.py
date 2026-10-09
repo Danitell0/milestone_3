@@ -120,11 +120,11 @@ class Map:
                 end = zone
 
         if start is None:
-            raise FlyInError("Error: Impossible to generate Map with no "
+            raise FlyInError("Impossible to generate Map with no "
                              "starting point.")
         self.start = start
         if end is None:
-            raise FlyInError("Error: Impossible to generate Map with no "
+            raise FlyInError("Impossible to generate Map with no "
                              "ending point.")
         self.end = end
 
