@@ -124,4 +124,4 @@ SAKURA = Theme(name="Sakura",
                texture=Texture.DOTS,
                texture_color=(240, 214, 222))
 
-THEMES: list[Theme] = [BLUEPRINT, RADAR, PAPER, MATRIX, AMBER, OCEAN, SAKURA]
+THEMES: list[Theme] = [RADAR, BLUEPRINT, PAPER, MATRIX, AMBER, OCEAN, SAKURA]

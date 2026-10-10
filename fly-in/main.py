@@ -1,5 +1,6 @@
 import argparse
 import sys
+from pathlib import Path
 
 from parsing import MapParser
 from errors import FlyInError
@@ -36,7 +37,7 @@ def main() -> None:
         printer = ColorPrinter()
 
         if args.visual:
-            Visualizer(net, simulation).run()
+            Visualizer(Path(args.map_path)).run()
         else:
             while not simulation.is_finished():
                 if simulation.turn >= MAX_TURNS:

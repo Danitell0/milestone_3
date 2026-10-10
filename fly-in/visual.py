@@ -2,16 +2,22 @@ import pygame
 import math
 import random
 
+from pathlib import Path
+from typing import Optional
 from simulation import Simulation
 from models import Map, Zone
-from colors import (Theme, Texture, THEMES, COLORS, DEFAULT_ZONE_COLOR, RGB,
-                    RAINBOW, RADAR)
+from colors import Texture, THEMES, COLORS, DEFAULT_ZONE_COLOR, RGB, RAINBOW
+from parsing import MapParser
+from pathfinder import PathFinder
+from simulation import Simulation
+from errors import FlyInError
 
 # animation
 TURN_DELAY = 600
 SPEEDS = [1, 2, 4]
 CONTROLS = ["[Space]: play / pause", "[->]: next turn",
             "[F]: fast forward", "[T]: change theme",
+            "[R]: reset simulation"
             "[Q]: quit program",]
 GLOW_RADIUS = 35
 BUMP_TIME = 250
@@ -32,16 +38,16 @@ RADIUS = 20
 
 
 class Visualizer:
-    def __init__(self, network: Map, sim: Simulation,
-                 theme: Theme = RADAR) -> None:
+    def __init__(self, path: Path) -> None:
         pygame.init()
 
+        self.map_path = path
+
         # --------- Visual Control
-        self.theme = theme
         self.speed_index: int = 0
         self.theme_index: int = 0
-        self.paused: bool = True
         self.last_step: int = 0
+        self.error: Optional[str] = None
 
         # ---------- Animation
         self.from_pos: dict[int, tuple[int, int]] = {}
@@ -49,8 +55,6 @@ class Visualizer:
         self.anim_start: int = 0
         self.bump_start: dict[str, int] = {}
 
-        self.sim = sim
-        self.network = network
         self.screen = pygame.display.set_mode((WIDTH, HEIGHT))
         self.clock = pygame.time.Clock()
         # text fonts
@@ -59,23 +63,49 @@ class Visualizer:
         self.counter_font = pygame.font.Font(None, 70)
         self.control_font = pygame.font.Font(None, 50)
 
+        self._load_map(path)
+        self._reset_view()
+        self._apply_theme()
+        pygame.display.set_caption("Fly-in project by danmorei")
+
+    def _load_map(self, path: Path) -> None:
+        try:
+            network = MapParser(path).read_map()
+            distances = PathFinder(network).compute_distances()
+            sim = Simulation(network, distances)
+        except FlyInError as e:
+            self.error = str(e)
+            return
+        self.network = network
+        self.sim = sim
+        self.map_path = path
+        self.error = None
+        self._reset_view()
+
+    def _reset_view(self) -> None:
+        self.paused: bool = True
+
         # ---------- Map scale compute
-        self.min_x = min(zone.x for zone in network.zones.values())
-        self.max_x = max(zone.x for zone in network.zones.values())
-        self.min_y = min(zone.y for zone in network.zones.values())
-        self.max_y = max(zone.y for zone in network.zones.values())
+        self.min_x = min(zone.x for zone in self.network.zones.values())
+        self.max_x = max(zone.x for zone in self.network.zones.values())
+        self.min_y = min(zone.y for zone in self.network.zones.values())
+        self.max_y = max(zone.y for zone in self.network.zones.values())
         self.usable_w = WIDTH - 2 * MARGIN
         self.usable_h = HEIGHT - 2 * MARGIN
+
         # max() in case of 0
         self.range_x = max((self.max_x - self.min_x), 1)
         self.range_y = max((self.max_y - self.min_y), 1)
         self.scale = min((self.usable_w / self.range_x),
                          (self.usable_h / self.range_y))
 
-        self._apply_theme()
         self.from_pos = self._drone_positions()
         self.to_pos = self.from_pos
-        pygame.display.set_caption("Fly-in project by danmorei")
+
+        # reseting map
+        self.anim_start: int = 0
+        self.last_step: int = 0
+        self.bump_start: dict[str, int] = {}
 
     def run(self) -> None:
         running = True
@@ -99,6 +129,9 @@ class Visualizer:
                         self.theme_index = (
                                 self.theme_index + 1) % len(THEMES)
                         self._apply_theme()
+                    elif event.key == pygame.K_r:
+                        self._load_map(self.map_path)
+                        self._reset_view()
                     elif event.key == pygame.K_q:
                         running = False
 
