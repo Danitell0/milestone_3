@@ -14,6 +14,8 @@ CONTROLS = ["[Space]: play / pause", "[->]: next turn",
             "[F]: fast forward", "[T]: change theme",
             "[Q]: quit program",]
 GLOW_RADIUS = 35
+BUMP_TIME = 250
+BUMP_SIZE = 6
 
 # window
 WIDTH = 1800
@@ -45,6 +47,7 @@ class Visualizer:
         self.from_pos: dict[int, tuple[int, int]] = {}
         self.to_pos: dict[int, tuple[int, int]] = {}
         self.anim_start: int = 0
+        self.bump_start: dict[str, int] = {}
 
         self.sim = sim
         self.network = network
@@ -133,6 +136,7 @@ class Visualizer:
         return (int(px), int(py))
 
     def _draw_map(self) -> None:
+        now = pygame.time.get_ticks()
         # drawing the links
         for link in self.network.connections.values():
             pygame.draw.line(
@@ -149,24 +153,41 @@ class Visualizer:
                     self.screen,
                     self.theme.pad_ring,
                     (px, py),
-                    RADIUS + 3)
+                    (self._zone_radius(zone.name, now) + 3))
             pygame.draw.circle(
                     self.screen,
                     self._zone_rgb(zone),
                     (px, py),
-                    RADIUS)
+                    self._zone_radius(zone.name, now))
             text = self.font.render(zone.name, True, self.theme.silkscreen)
             rect = text.get_rect(
                     center=(px, py + RADIUS + 10))
             self.screen.blit(text, rect)
+
+    def _zone_counts(self) -> dict[str, int]:
+        counter: dict[str, int] = {}
+        for drone in self.sim.active_drones:
+            if drone.zone is None:
+                continue
+            counter[drone.zone.name] = counter.get(drone.zone.name, 0) + 1
+        return counter
+
+    def _zone_radius(self, name: str, now: int) -> int:
+        start = self.bump_start.get(name)
+        if start is None:
+            return RADIUS
+        elapsed = now - start
+        if 0 <= elapsed < BUMP_TIME:
+            return RADIUS + int(BUMP_SIZE * (1 - elapsed / BUMP_TIME))
+        else:
+            return RADIUS
 
     def _draw_drones(self) -> None:
         counts: dict[str, int] = {}
 
         # gliding block
         now = pygame.time.get_ticks()
-        duration = (TURN_DELAY // SPEEDS[self.speed_index]) * 0.8
-        t = min(1.0, (now - self.anim_start) / duration)
+        t = min(1.0, (now - self.anim_start) / self._glide_duration())
 
         for drone in self.sim.active_drones:
             if drone.zone is None:
@@ -174,6 +195,8 @@ class Visualizer:
             counts[drone.zone.name] = counts.get(drone.zone.name, 0) + 1
         for drone_id, end in self.to_pos.items():
             start = self.from_pos.get(drone_id, end)
+            if start == end or t >= 1.0:
+                continue
             x, y = self._glide_between(start, end, t)
             self.screen.blit(self.glow, (x - GLOW_RADIUS, y - GLOW_RADIUS))
             pygame.draw.circle(self.screen, self.theme.drone_led, (x, y), 6)
@@ -181,8 +204,8 @@ class Visualizer:
             zone = self.sim.network.zones[name]
             px, py = self._to_pixel(zone)
             text = self.nb_font.render(
-                    f"x{count}", True, self.theme.silkscreen)
-            rect = text.get_rect(center=(px + RADIUS + 10, py - RADIUS))
+                    f"{count}", True, self.theme.silkscreen)
+            rect = text.get_rect(center=(px, py))
             self.screen.blit(text, rect)
 
     def _drone_positions(self) -> dict[int, tuple[int, int]]:
@@ -199,14 +222,26 @@ class Visualizer:
                 positions[drone.drone_id] = self._to_pixel(drone.zone)
         return positions
 
+    def _glide_duration(self) -> float:
+        duration = (TURN_DELAY // SPEEDS[self.speed_index]) * 0.8
+        return duration
+
     def _do_step(self) -> None:
         self.from_pos = self._drone_positions()
+        before = self._zone_counts()
         self.sim.step()
         self.to_pos = self._drone_positions()
+        after = self._zone_counts()
         self.anim_start = pygame.time.get_ticks()
         for drone_id in self.from_pos:
             if drone_id not in self.to_pos:
                 self.to_pos[drone_id] = self._to_pixel(self.network.end)
+        for name in set(before) | set(after):
+            if before.get(name, 0) < after.get(name, 0):
+                self.bump_start[
+                        name] = self.anim_start + int(self._glide_duration())
+            else:
+                self.bump_start[name] = self.anim_start
 
     @staticmethod
     def _glide_between(a: tuple[int, int],
