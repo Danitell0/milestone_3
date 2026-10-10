@@ -3,6 +3,7 @@ from typing import Optional
 from drone import Move, ZoneMove, ConnectionMove
 from colors import RGB, COLORS, RAINBOW, RESET
 
+
 class TextPrinter:
     def format_turn(self, moves: list[Move]) -> str:
         output: list[str] = []

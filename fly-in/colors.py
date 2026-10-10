@@ -11,6 +11,8 @@ COLORS: dict[str, RGB] = {
         "green": (124, 252, 0), "gray": (127, 127, 127),
         }
 
+DEFAULT_ZONE_COLOR = (220, 220, 220)
+
 RAINBOW: list[RGB] = [
         COLORS["red"], COLORS["orange"], COLORS["yellow"],
         COLORS["green"], COLORS["blue"], COLORS["violet"]

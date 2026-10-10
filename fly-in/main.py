@@ -35,21 +35,16 @@ def main() -> None:
         simulation = Simulation(net, distances)
         printer = ColorPrinter()
 
-        # debug section
-
         if args.visual:
-            Visualizer(net).run()
-            return
-
-        # end debug section
-
-        while not simulation.is_finished():
-            if simulation.turn >= MAX_TURNS:
-                raise FlyInError("Simulation did not finish.")
-            moves = simulation.step()
-            print(printer.format_turn(moves))
-        print(f"Simulation finished in {simulation.turn} turns.",
-              file=sys.stderr)
+            Visualizer(net, simulation).run()
+        else:
+            while not simulation.is_finished():
+                if simulation.turn >= MAX_TURNS:
+                    raise FlyInError("Simulation did not finish.")
+                moves = simulation.step()
+                print(printer.format_turn(moves))
+            print(f"Simulation finished in {simulation.turn} turns.",
+                  file=sys.stderr)
     except FlyInError as e:
         print(f"Error: {e}", file=sys.stderr)
         sys.exit(1)
