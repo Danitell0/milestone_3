@@ -41,6 +41,11 @@ class Visualizer:
         self.paused: bool = True
         self.last_step: int = 0
 
+        # ---------- Animation
+        self.from_pos: dict[int, tuple[int, int]] = {}
+        self.to_pos: dict[int, tuple[int, int]] = {}
+        self.anim_start: int = 0
+
         self.sim = sim
         self.network = network
         self.screen = pygame.display.set_mode((WIDTH, HEIGHT))
@@ -65,6 +70,8 @@ class Visualizer:
                          (self.usable_h / self.range_y))
 
         self._apply_theme()
+        self.from_pos = self._drone_positions()
+        self.to_pos = self.from_pos
         pygame.display.set_caption("Fly-in project by danmorei")
 
     def run(self) -> None:
@@ -77,7 +84,7 @@ class Visualizer:
                 elif event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_RIGHT and self.paused:
                         if not self.sim.is_finished():
-                            self.sim.step()
+                            self._do_step()
                             self.last_step = pygame.time.get_ticks()
                     elif event.key == pygame.K_SPACE:
                         if not self.sim.is_finished():
@@ -98,7 +105,7 @@ class Visualizer:
                     and not self.sim.is_finished()
                     and now - self.last_step >= (TURN_DELAY //
                                                  SPEEDS[self.speed_index])):
-                self.sim.step()
+                self._do_step()
                 self.last_step = now
 
             # drawing block
@@ -156,39 +163,60 @@ class Visualizer:
     def _draw_drones(self) -> None:
         counts: dict[str, int] = {}
 
+        # gliding block
+        now = pygame.time.get_ticks()
+        duration = (TURN_DELAY // SPEEDS[self.speed_index]) * 0.8
+        t = min(1.0, (now - self.anim_start) / duration)
+
+        for drone in self.sim.active_drones:
+            if drone.zone is None:
+                continue
+            counts[drone.zone.name] = counts.get(drone.zone.name, 0) + 1
+        for drone_id, end in self.to_pos.items():
+            start = self.from_pos.get(drone_id, end)
+            x, y = self._glide_between(start, end, t)
+            self.screen.blit(self.glow, (x - GLOW_RADIUS, y - GLOW_RADIUS))
+            pygame.draw.circle(self.screen, self.theme.drone_led, (x, y), 6)
+        for name, count in counts.items():
+            zone = self.sim.network.zones[name]
+            px, py = self._to_pixel(zone)
+            text = self.nb_font.render(
+                    f"x{count}", True, self.theme.silkscreen)
+            rect = text.get_rect(center=(px + RADIUS + 10, py - RADIUS))
+            self.screen.blit(text, rect)
+
+    def _drone_positions(self) -> dict[int, tuple[int, int]]:
+        positions: dict[int, tuple[int, int]] = {}
         for drone in self.sim.active_drones:
             if drone.zone is None and drone.connection:
                 x1, y1 = self._to_pixel(drone.connection.zone_a)
                 x2, y2 = self._to_pixel(drone.connection.zone_b)
                 midpoint = ((x1 + x2) // 2, (y1 + y2) // 2)
-                self.screen.blit(self.glow, (midpoint[0] - GLOW_RADIUS,
-                                             midpoint[1] - GLOW_RADIUS))
-                pygame.draw.circle(
-                        self.screen,
-                        self.theme.drone_led,
-                        midpoint,
-                        6
-                        )
+                positions[drone.drone_id] = midpoint
+            elif drone.zone is None:
                 continue
-            if drone.zone is None:
-                continue
-            counts[drone.zone.name] = counts.get(drone.zone.name, 0) + 1
+            else:
+                positions[drone.drone_id] = self._to_pixel(drone.zone)
+        return positions
 
-        for name, count in counts.items():
-            zone = self.sim.network.zones[name]
-            px, py = self._to_pixel(zone)
-            self.screen.blit(self.glow, (px - GLOW_RADIUS,
-                                         py - GLOW_RADIUS))
-            pygame.draw.circle(
-                    self.screen,
-                    self.theme.drone_led,
-                    self._to_pixel(zone),
-                    6
-                    )
-            text = self.nb_font.render(
-                    f"x{count}", True, self.theme.silkscreen)
-            rect = text.get_rect(center=(px + RADIUS + 10, py - RADIUS))
-            self.screen.blit(text, rect)
+    def _do_step(self) -> None:
+        self.from_pos = self._drone_positions()
+        self.sim.step()
+        self.to_pos = self._drone_positions()
+        self.anim_start = pygame.time.get_ticks()
+        for drone_id in self.from_pos:
+            if drone_id not in self.to_pos:
+                self.to_pos[drone_id] = self._to_pixel(self.network.end)
+
+    @staticmethod
+    def _glide_between(a: tuple[int, int],
+                       b: tuple[int, int],
+                       t: float) -> tuple[int, int]:
+        ax, ay = a
+        bx, by = b
+        axis_a = ax + (bx - ax) * t
+        axis_b = ay + (by - ay) * t
+        return (int(axis_a), int(axis_b))
 
     def _draw_hud(self) -> None:
         # position
