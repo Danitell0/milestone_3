@@ -6,7 +6,9 @@ from colors import COLORS, DEFAULT_ZONE_COLOR, RGB, RAINBOW
 
 # animation
 TURN_DELAY = 600
-CONTROLS = ["Space: play / pause", "→: next turn"]
+SPEEDS = [1, 2, 4]
+CONTROLS = ["[Space]: play / pause", "[->]: next turn",
+            "[F]: fast forward","[Q]: quit program",]
 
 # window
 WIDTH = 1800
@@ -23,6 +25,7 @@ class Visualizer:
         pygame.init()
 
         # --------- Visual Control
+        self.speed_index: int = 0
         self.paused: bool = True
         self.last_step: int = 0
 
@@ -60,15 +63,22 @@ class Visualizer:
                     if event.key == pygame.K_RIGHT and self.paused:
                         if not self.sim.is_finished():
                             self.sim.step()
+                            self.last_step = pygame.time.get_ticks()
                     elif event.key == pygame.K_SPACE:
                         if not self.sim.is_finished():
                             self.paused = not self.paused
+                    elif event.key == pygame.K_f:
+                        self.speed_index = (
+                                self.speed_index + 1) % len(SPEEDS)
+                    elif event.key == pygame.K_q:
+                        running = False
 
             # time block
             now = pygame.time.get_ticks()
             if (not self.paused
                     and not self.sim.is_finished()
-                    and now - self.last_step >= TURN_DELAY):
+                    and now - self.last_step >= (TURN_DELAY //
+                                                 SPEEDS[self.speed_index])):
                 self.sim.step()
                 self.last_step = now
 
