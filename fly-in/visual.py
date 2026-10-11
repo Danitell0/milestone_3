@@ -17,8 +17,8 @@ TURN_DELAY = 600
 SPEEDS = [1, 2, 4]
 CONTROLS = ["[Space]: play / pause", "[->]: next turn",
             "[F]: fast forward", "[T]: change theme",
-            "[R]: reset simulation"
-            "[Q]: quit program",]
+            "[R]: reset simulation", "[M]: change map",
+            "[H]: show/hide HUD", "[Q]: quit program",]
 GLOW_RADIUS = 35
 BUMP_TIME = 250
 BUMP_SIZE = 6
@@ -32,6 +32,7 @@ SCAN_STEP = 6
 COLUMN_STEP = 10
 RING_STEP = 120
 MARGIN = 80
+MAP_OFFSET = 20
 
 # zone
 RADIUS = 20
@@ -40,14 +41,18 @@ RADIUS = 20
 class Visualizer:
     def __init__(self, path: Path) -> None:
         pygame.init()
-
+        
+        # --------- Map control
         self.map_path = path
+        self.map_files: list[Path] = sorted(Path("maps").rglob("*txt"))
+        self.map_index = self.map_files.index(path)
 
         # --------- Visual Control
         self.speed_index: int = 0
         self.theme_index: int = 0
         self.last_step: int = 0
         self.error: Optional[str] = None
+        self.show_hud: bool = True
 
         # ---------- Animation
         self.from_pos: dict[int, tuple[int, int]] = {}
@@ -74,7 +79,7 @@ class Visualizer:
             distances = PathFinder(network).compute_distances()
             sim = Simulation(network, distances)
         except FlyInError as e:
-            self.error = str(e)
+            self.error = f"Map {path.stem}: {e}"
             return
         self.network = network
         self.sim = sim
@@ -132,6 +137,12 @@ class Visualizer:
                     elif event.key == pygame.K_r:
                         self._load_map(self.map_path)
                         self._reset_view()
+                    elif event.key == pygame.K_m:
+                        self.map_index = (
+                                self.map_index + 1) % len(self.map_files)
+                        self._load_map(self.map_files[self.map_index])
+                    elif event.key == pygame.K_h:
+                        self.show_hud = not self.show_hud
                     elif event.key == pygame.K_q:
                         running = False
 
@@ -146,7 +157,6 @@ class Visualizer:
 
             # drawing block
             self.screen.blit(self.background, (0, 0))
-            self._draw_hud()
             if self.sim.is_finished():
                 turn_text = f"Finished in {self.sim.turn} turns"
             else:
@@ -154,9 +164,19 @@ class Visualizer:
             display_text = self.counter_font.render(turn_text,
                                                     True,
                                                     self.theme.silkscreen)
-            self.screen.blit(display_text, (20, 20))
-            self._draw_map()
-            self._draw_drones()
+            map_name = self.control_font.render(self.map_path.stem, True,
+                                                self.theme.silkscreen)
+            if self.error:
+                error_msg = self.counter_font.render(self.error, True,
+                                                     COLORS["red"])
+                self.screen.blit(error_msg, (400, 30))
+            else:
+                self.screen.blit(map_name, (1350, 30))
+                self.screen.blit(display_text, (20, 20))
+                self._draw_map()
+                self._draw_drones()
+            if self.show_hud:
+                self._draw_hud()
 
             pygame.display.flip()
             self.clock.tick(30)
@@ -164,8 +184,8 @@ class Visualizer:
         pygame.quit()
 
     def _to_pixel(self, zone: Zone) -> tuple[int, int]:
-        px = MARGIN + (zone.x - self.min_x) * self.scale
-        py = MARGIN + (zone.y - self.min_y) * self.scale
+        px = MARGIN + (zone.x - self.min_x) * self.scale + MAP_OFFSET
+        py = MARGIN + (zone.y - self.min_y) * self.scale + MAP_OFFSET
         return (int(px), int(py))
 
     def _draw_map(self) -> None:
