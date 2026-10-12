@@ -1,8 +1,4 @@
-"""Class for each zone of the simulation
-
-With each role and type in smaller Enum classes.
-"""
-
+"""Zones, connections and the map that links them."""
 from enum import Enum
 from typing import Optional
 
@@ -10,11 +6,13 @@ from errors import FlyInError
 
 
 class ZoneType(Enum):
-    """Parameter types for type for each zone.
+    """The kind of zone, which decides how drones can use it.
 
-    A NORMAL and a PRIORITY zone will both take 1 turn to move to,
-    a RESTRICTED zone will take an 'n' amount of turns to move to,
-    a BLOCKED zone will be unavailable for the drones to land.
+    Attributes:
+        NORMAL: Takes 1 turn to enter.
+        BLOCKED: Drones cannot enter it.
+        PRIORITY: Takes 1 turn to enter.
+        RESTRICTED: Takes 2 turns to enter.
     """
     NORMAL = "normal"
     BLOCKED = "blocked"
@@ -23,11 +21,12 @@ class ZoneType(Enum):
 
 
 class ZoneRole(Enum):
-    """Parameter types for defining each zone role.
+    """The role a zone plays in the map.
 
-    START will define the zone where all the drones will start the simulation,
-    END will define the goal zone where all the drones should finish, and
-    HUB defines all the zones in between them.
+    Attributes:
+        START: Zone where all drones begin.
+        END: Zone all drones must reach.
+        HUB: Any zone in between.
     """
     START = "start_hub"
     END = "end_hub"
@@ -35,18 +34,16 @@ class ZoneRole(Enum):
 
 
 class Zone:
-    """Builds each zone with all the necessary information for the simulation.
+    """A place on the map where drones can stop.
 
     Attributes:
-        name: custom name for the zone.
-        x: coordinate for horizontal in int format.
-        y: coordinate for vertical in int format.
-        zone_role: role for the zone (start, end or hub).
-        zone_type: type of the zone (normal, blocked, priority or restricted),
-            if not defined it will be defaulted to NORMAL.
-        color: an optional parameter to define the color of the zone.
-        max_drones: Max number of drones allowed in the zone simultaneously,
-            if not defined it will be defaulted to 1.
+        name: Unique name of the zone.
+        x: Horizontal position on the map.
+        y: Vertical position on the map.
+        zone_role: Role of the zone in the map.
+        zone_type: Kind of zone (Defaults to NORMAL).
+        color: Color name used when drawing the zone (or None).
+        max_drones: Max drones allowed in the zone at once (Defaults to 1).
     """
     def __init__(self, name: str, x: int, y: int,
                  role: ZoneRole, zone_type: ZoneType = ZoneType.NORMAL,
@@ -61,20 +58,20 @@ class Zone:
 
     @property
     def cost(self) -> int:
-        """Cost of moving INTO this zone, in turns."""
+        """Turns needed to move into this zone."""
         if self.zone_type == ZoneType.RESTRICTED:
             return 2
         return 1
 
 
 class Connection:
-    """Build a connection between two Zones.
+    """A link between two zones that drones can fly along.
 
     Attributes:
-        zone_a: first zone of the connection.
-        zone_b: second zone of the connection.
-        max_link_capacity: number of drones allowed to traverse this
-            connection simultaneously.
+        zone_a: First zone of the connection.
+        zone_b: Second zone of the connection.
+        max_link_capacity: Max drones on the connection at once
+            (Defaults to 1).
     """
     def __init__(self, zone_a: Zone, zone_b: Zone,
                  max_link_capacity: int = 1) -> None:
@@ -84,29 +81,35 @@ class Connection:
 
     @property
     def key(self) -> tuple[str, str]:
+        """Sorted pair of zone names, so A-B and B-A give the same key."""
         return (min(self.zone_a.name, self.zone_b.name),
                 max(self.zone_a.name, self.zone_b.name))
 
     @property
     def name(self) -> str:
+        """Name used in the output (ex: roof-corridor)."""
         return f"{self.zone_a.name}-{self.zone_b.name}"
 
 
 class Map:
-    """Build a network of zones and connections.
+    """The full network of zones and connections for a simulation
 
     Attributes:
-        nb_drones: number of drones in the simulation.
-        zones: dictionary of zones in the map with the name as a key.
-        connections: dictionary of connections in the map with the zones
-            keyed by the alphabetically ordered pair of zone names.
-        start: starting zone of the map.
-        end: ending zone of the map.
-        neighbours: a dictionary to connect the zone to its neighbour zones.
+        nb_drones: Number of drones in the simulation.
+        zones: Zones keyed by name.
+        connections: Connections keyed by their sorted pair of zone names.
+        start: Zone where the drones begin.
+        end: Zone the drones must reach.
+        neighbours: Zone names mapped to a list of pairs.
     """
     def __init__(self, nb_drones: int,
                  zones: dict[str, Zone],
                  connections: dict[tuple[str, str], Connection]) -> None:
+        """Set up the map and find its start and end zones.
+
+        Raises:
+            FlyInError: If the map has no start or no end zone.
+        """
         self.nb_drones = nb_drones
         self.zones = zones
         self.connections = connections
