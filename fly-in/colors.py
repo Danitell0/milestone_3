@@ -1,3 +1,13 @@
+"""Colors and visual themes for the terminal output and the pygame window.
+
+Attributes:
+    RGB: Type alias for a (red, green, blue) color, each value 0-255.
+    COLORS: Map color names to their RGB values.
+    DEFAULT_ZONE_COLOR: Color for zones with no or an unknown color.
+    RAINBOW: Colors cycled through for 'rainbow' zones.
+    RESET: ANSI code that resets the terminal color.
+    THEMES: Every theme the user can switch between.
+"""
 from dataclasses import dataclass
 from enum import Enum, auto
 
@@ -25,6 +35,16 @@ RESET = "\033[0m"
 
 
 class Texture(Enum):
+    """Texture patterns for the pygame window background.
+
+    Attributes:
+        NONE: No pattern added.
+        GRID: Add a grid.
+        DOTS: Add a dot styled grid.
+        SCANLINES: Add horizontal lines pattern.
+        RINGS: Add rings and a cross as a radar.
+        COLUMNS: Add vertical lines with different shades and weight.
+    """
     NONE = auto()
     GRID = auto()
     DOTS = auto()
@@ -35,6 +55,20 @@ class Texture(Enum):
 
 @dataclass(frozen=True)
 class Theme:
+    """A color pallete for the pygame window.
+
+    Attributes:
+        name: Name shown when switching themes.
+        background: Window background color.
+        trace: Color of connection lines.
+        pad_ring: Outline color of the zones.
+        silkscreen: Color of zone names and drone counts.
+        hud_bg: HUD background color.
+        hud_text: Color of the commands of the HUD.
+        drone_led: Color of the light around the drone.
+        texture: Texture added to the background of the theme.
+        texture_color: Color of the textures added to the window background.
+    """
     name: str
     background: RGB
     trace: RGB
