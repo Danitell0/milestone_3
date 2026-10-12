@@ -1,3 +1,4 @@
+"""Read a map file and turn it into a Map."""
 from pathlib import Path
 from typing import Optional
 
@@ -6,6 +7,16 @@ from errors import FlyInError
 
 
 class MapParser:
+    """Parser that builds a Map from a map file.
+
+    Attributes:
+        map_path: Path to the map file.
+        nb_drones: Number of drones, 0 until it is parsed.
+        zones: Zones parsed so far, keyed by name.
+        connections: Connections parsed so far, keyed by their sorted pair.
+        is_start: Whether a start zone has been parsed.
+        is_end: Whether a end zone has been parsed.
+    """
     def __init__(self, map_path: Path) -> None:
         self.map_path = map_path
 
@@ -17,6 +28,18 @@ class MapParser:
         self.is_end = False
 
     def read_map(self) -> Map:
+        """Read the map file and build the map from it.
+
+        Blank lines and lines starting with '#' are skipped. Errors from a
+        line are reported with its line number.
+
+        Returns:
+            The map built from the file.
+
+        Raises:
+            FlyInError: If the file can't be opened, a line is invalid or
+            nb_drones, start zone or end zone are missing.
+        """
         try:
             with open(self.map_path, "r") as file:
                 data = file.read()
@@ -43,6 +66,16 @@ class MapParser:
         return Map(self.nb_drones, self.zones, self.connections)
 
     def _parse_line(self, line: str) -> None:
+        """Parse one line, based on the prefix before the ':'.
+        nb_drones must be the first setting in the file.
+
+        Args:
+            line: A full line from the map file.
+
+        Raises:
+            FlyInError: If the ':' is missing, the prefix is unknown or
+                defined twice.
+        """
         setting = line.partition(':')
         if not setting[1]:
             raise FlyInError(f"Wrong syntax: '{line}' missing ':'.")
@@ -62,6 +95,14 @@ class MapParser:
                 raise FlyInError(f"'{setting[0]}': Unknown prefix.")
 
     def _parse_nb_drones(self, line: str) -> None:
+        """Parse and store the number of drones.
+
+        Args:
+            line: Text after 'nb_drones:'.
+
+        Raises:
+            FlyInError: If the value is not a positive integer.
+        """
         try:
             nb_drones = int(line.strip())
         except ValueError:
@@ -72,6 +113,20 @@ class MapParser:
         self.nb_drones = nb_drones
 
     def _parse_zone(self, prefix: str, line: str) -> None:
+        """Parse a zone line and add it to the zones.
+
+        max_drones is only applied to hubs.
+
+
+        Args:
+            prefix: Role of the zone: 'start_hub', 'hub' or 'end_hub'.
+            line: Text after the ':'.
+
+        Raises:
+            FlyInError: If the name or coordinates are invalid, the zone
+                already exists, a seconf start or end zone is defined,
+                or metadata invalid.
+        """
         setting = line.partition('[')
         params = setting[0].split()
         if len(params) != 3:
@@ -134,6 +189,15 @@ class MapParser:
                                 max_drones)
 
     def _parse_connection(self, line: str) -> None:
+        """Parse a connection line and add it to the connections.
+
+        Args:
+            line: Text after 'connection:'.
+
+        Raises:
+            FlyInError: If the zones are invalid or unknown, the connection
+                already exists, or the metadata invalid.
+        """
         setting = line.partition("[")
         zone = setting[0].split("-")
         if len(zone) != 2:
@@ -179,6 +243,17 @@ class MapParser:
 
     @staticmethod
     def _parse_metadata(line: str) -> dict[str, str]:
+        """Parse the 'key=value' tags inside the brackets.
+
+        Args:
+            line: Text after the '['.
+
+        Returns:
+            Tag names mapped to their values, both as strings.
+
+        Raises:
+            FlyInError: If a tag isn't 'key=value' or is repeated.
+        """
         metadata: dict[str, str] = {}
         tags = line.strip().removesuffix("]").split()
         for tag in tags:
