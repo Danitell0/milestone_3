@@ -15,7 +15,7 @@ from simulation import Simulation
 from output import ColorPrinter
 from visual import Visualizer
 
-MAX_TURNS = 10000 # safety net (stops a simulation that never finishes)
+MAX_TURNS = 10000  # safety net (stops a simulation that never finishes)
 
 
 def parse_args() -> argparse.Namespace:
