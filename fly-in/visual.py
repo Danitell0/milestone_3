@@ -121,7 +121,6 @@ class Visualizer:
         self._load_map(self.map_path)
         if self.error:
             raise FlyInError(self.error)
-        self._reset_view()
         self._apply_theme()
         pygame.display.set_caption("Fly-in project by danmorei")
 
@@ -202,7 +201,6 @@ class Visualizer:
                         self._apply_theme()
                     elif event.key == pygame.K_r:
                         self._load_map(self.map_path)
-                        self._reset_view()
                     elif event.key == pygame.K_m:
                         self.map_index = (
                                 self.map_index + 1) % len(self.map_files)
@@ -292,19 +290,18 @@ class Visualizer:
                     center=(px, py + RADIUS + 10))
             self.screen.blit(text, rect)
 
-    def _zone_counts(self) -> dict[str, int]:
-        """Count the drones in each zone.
+    def _drone_zones(self) -> dict[int, str]:
+        """Find the zone each drone is in.
 
         Returns:
-            Zone names mapped to the number of drones in them. Drones in
-            flight are not counted.
+            Drone ids mapped to the name of their zone. Drones in flight
+            are left out.
         """
-        counter: dict[str, int] = {}
+        zones: dict[int, str] = {}
         for drone in self.sim.active_drones:
-            if drone.zone is None:
-                continue
-            counter[drone.zone.name] = counter.get(drone.zone.name, 0) + 1
-        return counter
+            if drone.zone is not None:
+                zones[drone.drone_id] = drone.zone.name
+        return zones
 
     def _zone_radius(self, name: str, now: int) -> int:
         """Get a zone's radius, bigger while its bump animation plays.
@@ -389,20 +386,20 @@ class Visualizer:
         bump when the glide ends.
         """
         self.from_pos = self._drone_positions()
-        before = self._zone_counts()
+        before = self._drone_zones()
         self.sim.step()
         self.to_pos = self._drone_positions()
-        after = self._zone_counts()
+        after = self._drone_zones()
         self.anim_start = pygame.time.get_ticks()
+        bump_time = self.anim_start + int(self._glide_duration())
         end = self.network.end
         for drone_id in self.from_pos:
             if drone_id not in self.to_pos:
                 self.to_pos[drone_id] = self._to_pixel(end)
-                after[end.name] = after.get(end.name, 0) + 1
-        for name in set(before) | set(after):
-            if before.get(name, 0) < after.get(name, 0):
-                self.bump_start[
-                        name] = self.anim_start + int(self._glide_duration())
+                self.bump_start[end.name] = bump_time
+        for drone_id, name in after.items():
+            if before.get(drone_id) != name:
+                self.bump_start[name] = bump_time
 
     @staticmethod
     def _glide_between(a: tuple[int, int],
