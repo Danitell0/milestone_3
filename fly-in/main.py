@@ -1,3 +1,9 @@
+"""Fly-in: route a fleet of drones through a zone network.
+
+Entry point. Reads a map file, computes per-zone distances to the end
+zone, and runs the turn-by-turn simulation, either as text output or
+in a pygame window (--visual).
+"""
 import argparse
 import sys
 from pathlib import Path
@@ -9,10 +15,16 @@ from simulation import Simulation
 from output import ColorPrinter
 from visual import Visualizer
 
-MAX_TURNS = 10000
+MAX_TURNS = 10000 # safety net (stops a simulation that never finishes)
 
 
 def parse_args() -> argparse.Namespace:
+    """Parse the command-line arguments.
+
+    Returns:
+        The parsed arguments: 'map_path' (path to the map file) and
+        'visual' (True to open the pygame viewer).
+    """
     parser = argparse.ArgumentParser(
             description=("Route a fleet of drones from start to end through a"
                          " zone network.")
@@ -28,6 +40,14 @@ def parse_args() -> argparse.Namespace:
 
 
 def main() -> None:
+    """Run Fly-in on the map given on the command line.
+
+    In text mode, prints one line per turn in the subject's format and
+    the total turn count to stderr. In visual mode, opens the viewer.
+
+    Exits with status 1 on an invalid map or an unexpected error,
+    printing a one-line message to stderr instead of a traceback.
+    """
     try:
         args = parse_args()
         parser = MapParser(args.map_path)
