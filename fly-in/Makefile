@@ -9,7 +9,7 @@ UV = uv
 PY = $(UV) run python3
 MAP = maps/easy/01_linear_path.txt
 
-.PHONY: help install run debug clean lint lint-strict visual
+.PHONY: help install run debug clean fclean lint lint-strict visual
 
 # Commands -------
 
@@ -19,6 +19,7 @@ help:
 	@echo "$(GREEN)  run		->$(RESET) Run the pipeline (Default easy map)"
 	@echo "$(GREEN)  debug		->$(RESET) Run the pipeline with pdb"
 	@echo "$(GREEN)  clean		->$(RESET) Remove caches and ignored files"
+	@echo "$(GREEN)  fclean	->$(RESET) Remove caches, ignored files and virtual environment"
 	@echo "$(GREEN)  lint		->$(RESET) Run flake8 + mypy with required flags"
 	@echo "$(GREEN)  lint-strict	->$(RESET) Run mypy --strict"
 	@echo "$(GREEN)  visual	->$(RESET) Run the program with pygame visuals"
@@ -41,6 +42,10 @@ clean:
 	@find . -path './.venv' -prune -o -type f -name '*.py[co]' -print0 \
 		| xargs -0 -r rm -f
 	@rm -rf .mypy_cache .pytest_cache .ruff_cache
+
+fclean: clean
+	@echo "$(RED)Removing virtual environment.$(RESET)"
+	@rm -rf .venv
 
 lint:
 	@$(UV) run flake8 . --exclude=venv,.venv 
