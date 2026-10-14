@@ -1,11 +1,30 @@
+"""Pygame window that animates the simulation turn by turn.
+
+Attributes:
+    TURN_DELAY: Milliseconds between turns at normal speed.
+    SPEEDS: Speed multipliers cycled with [F].
+    CONTROS: Key bindings shown in the HUD.
+    GLOW_RADIUS: Radius of the glow around a moving drone.
+    BUMP_TIME Duration of a zone's bump animation in milliseconds.
+    BUMP_SIZE: Extra radius a zone grows by when it bumps.
+    WIDTH: Window width in pixels.
+    HEIGHT: Window height in pixels.
+    GRID_STEP: Spacing of the GRID texture lines.
+    DOT_STEP: Spacing of the DOTS texture.
+    SCAN_STEP: Spacing of the SCANLINES texture.
+    COLUMN_STEP: Spacing of the COLUMNS texture.
+    RING_STEP: Spacing between the RINGS texture circles.
+    MARGIN: Empty space around the map in pixels.
+    MAP_OFFSET: Extra shift applied to the whole map in pixels.
+    RADIUS: Radius of a zone in pixels.
+    """
 import pygame
 import math
 import random
 
 from pathlib import Path
 from typing import Optional
-from simulation import Simulation
-from models import Map, Zone
+from models import Zone
 from colors import Texture, THEMES, COLORS, DEFAULT_ZONE_COLOR, RGB, RAINBOW
 from parsing import MapParser
 from pathfinder import PathFinder
@@ -39,13 +58,44 @@ RADIUS = 20
 
 
 class Visualizer:
+    """Pygame window that plays the simulation and handles user input.
+
+    Attributes:
+        map_path: Path of the map currently loaded.
+        map_files: Maps in the maps folder plus the starting map,
+            cycled with [M].
+        map_index: Position of the current map in map_files.
+        network: The map being shown.
+        sim: The simulation being played.
+        paused: Whether automatic turns are paused.
+        speed_index: Current position is SPEEDS.
+        theme_index: Current position in THEMES.
+        theme: The theme in use.
+        error: Message shown instead of the map if it failed to load.
+        show_hud: Whether the controls box is shown.
+        from_pos: Drone ids mapped to their pixel position before the turn.
+        to_pos: Drone ids mapped to their pixel position after the turn.
+        anim_start: Time the current glide started in milliseconds.
+        bump_start: Zone names mapped to when their bump starts.
+        """
     def __init__(self, path: Path) -> None:
+        """Open the window and load the first map.
+
+        Args:
+            path: Map file to show first. Must be inside the maps folder.
+
+        Raises:
+            FlyInError: If the map cannot be loaded.
+        """
         pygame.init()
-        
+
         # --------- Map control
-        self.map_path = path
-        self.map_files: list[Path] = sorted(Path("maps").rglob("*txt"))
-        self.map_index = self.map_files.index(path)
+        self.map_path = path.resolve()
+        self.map_files: list[Path] = sorted(p.resolve() for p in
+                                            Path("maps").rglob("*.txt"))
+        if self.map_path not in self.map_files:
+            self.map_files.insert(0, self.map_path)
+        self.map_index = self.map_files.index(self.map_path)
 
         # --------- Visual Control
         self.speed_index: int = 0
@@ -68,12 +118,22 @@ class Visualizer:
         self.counter_font = pygame.font.Font(None, 70)
         self.control_font = pygame.font.Font(None, 50)
 
-        self._load_map(path)
+        self._load_map(self.map_path)
+        if self.error:
+            raise FlyInError(self.error)
         self._reset_view()
         self._apply_theme()
         pygame.display.set_caption("Fly-in project by danmorei")
 
     def _load_map(self, path: Path) -> None:
+        """Parse a map and start a new simulation on it.
+
+        If the map is invalid, the error is stored in self.error and the
+        previous map stays loaded.
+
+        Args:
+            path: Map file to load.
+        """
         try:
             network = MapParser(path).read_map()
             distances = PathFinder(network).compute_distances()
@@ -88,6 +148,7 @@ class Visualizer:
         self._reset_view()
 
     def _reset_view(self) -> None:
+        """Pause, fit the map to the window and clear the animations"""
         self.paused: bool = True
 
         # ---------- Map scale compute
@@ -108,11 +169,16 @@ class Visualizer:
         self.to_pos = self.from_pos
 
         # reseting map
-        self.anim_start: int = 0
-        self.last_step: int = 0
-        self.bump_start: dict[str, int] = {}
+        self.anim_start = 0
+        self.last_step = 0
+        self.bump_start = {}
 
     def run(self) -> None:
+        """Run the main loop until the window is closed.
+
+        Each frame handles key presses, plays a turn when it's time and
+        redraws the window.
+        """
         running = True
         while running:
             # control block
@@ -184,11 +250,20 @@ class Visualizer:
         pygame.quit()
 
     def _to_pixel(self, zone: Zone) -> tuple[int, int]:
+        """Convert a zone's map coordinates to a position in the window.
+
+        Args:
+            zone: The zone to place.
+
+        Returns:
+            The (x, y) pixel position of the zone.
+        """
         px = MARGIN + (zone.x - self.min_x) * self.scale + MAP_OFFSET
         py = MARGIN + (zone.y - self.min_y) * self.scale + MAP_OFFSET
         return (int(px), int(py))
 
     def _draw_map(self) -> None:
+        """Draw the connections, then the zones with their names."""
         now = pygame.time.get_ticks()
         # drawing the links
         for link in self.network.connections.values():
@@ -218,6 +293,12 @@ class Visualizer:
             self.screen.blit(text, rect)
 
     def _zone_counts(self) -> dict[str, int]:
+        """Count the drones in each zone.
+
+        Returns:
+            Zone names mapped to the number of drones in them. Drones in
+            flight are not counted.
+        """
         counter: dict[str, int] = {}
         for drone in self.sim.active_drones:
             if drone.zone is None:
@@ -226,6 +307,15 @@ class Visualizer:
         return counter
 
     def _zone_radius(self, name: str, now: int) -> int:
+        """Get a zone's radius, bigger while its bump animation plays.
+
+        Args:
+            name: Name of the zone.
+            now: Current time in milliseconds.
+
+        Returns:
+            The radius to draw the zone with, in pixels.
+        """
         start = self.bump_start.get(name)
         if start is None:
             return RADIUS
@@ -236,6 +326,11 @@ class Visualizer:
             return RADIUS
 
     def _draw_drones(self) -> None:
+        """Draw the gliding drones and the drone count on each zone.
+
+        Drones are only drawn while they glide. Once landed, they are shown
+        as the number on their zone.
+        """
         counts: dict[str, int] = {}
 
         # gliding block
@@ -262,6 +357,13 @@ class Visualizer:
             self.screen.blit(text, rect)
 
     def _drone_positions(self) -> dict[int, tuple[int, int]]:
+        """Find where each active drone is in the window.
+
+        Drones in flight are placed halfway along their connection.
+
+        Returns:
+            Drone ids mapped to their (x, y) pixel position.
+        """
         positions: dict[int, tuple[int, int]] = {}
         for drone in self.sim.active_drones:
             if drone.zone is None and drone.connection:
@@ -276,30 +378,46 @@ class Visualizer:
         return positions
 
     def _glide_duration(self) -> float:
+        """Return how long a glide lasts (80% of a turn current speed)."""
         duration = (TURN_DELAY // SPEEDS[self.speed_index]) * 0.8
         return duration
 
     def _do_step(self) -> None:
+        """Play one turn and set up its glide and bump animations.
+
+        Delivered drones glide to the end zone. Zones that receive drones
+        bump when the glide ends.
+        """
         self.from_pos = self._drone_positions()
         before = self._zone_counts()
         self.sim.step()
         self.to_pos = self._drone_positions()
         after = self._zone_counts()
         self.anim_start = pygame.time.get_ticks()
+        end = self.network.end
         for drone_id in self.from_pos:
             if drone_id not in self.to_pos:
-                self.to_pos[drone_id] = self._to_pixel(self.network.end)
+                self.to_pos[drone_id] = self._to_pixel(end)
+                after[end.name] = after.get(end.name, 0) + 1
         for name in set(before) | set(after):
             if before.get(name, 0) < after.get(name, 0):
                 self.bump_start[
                         name] = self.anim_start + int(self._glide_duration())
-            else:
-                self.bump_start[name] = self.anim_start
 
     @staticmethod
     def _glide_between(a: tuple[int, int],
                        b: tuple[int, int],
                        t: float) -> tuple[int, int]:
+        """Find the point a fraction of the way from a to b.
+
+        Args:
+            a: Start position.
+            b: End position.
+            t: Progress from 0.0 (at a) to 1.0 (at b).
+
+        Returns:
+            The (x, y) position at that progress.
+        """
         ax, ay = a
         bx, by = b
         axis_a = ax + (bx - ax) * t
@@ -307,6 +425,7 @@ class Visualizer:
         return (int(axis_a), int(axis_b))
 
     def _draw_hud(self) -> None:
+        """Draw the controls box in the bottom-left corner."""
         # position
         line_height = self.control_font.get_linesize()
         start_y = HEIGHT - 20 - len(CONTROLS) * line_height
@@ -331,11 +450,27 @@ class Visualizer:
             self.screen.blit(text, (20, y))
 
     def _zone_rgb(self, zone: Zone) -> RGB:
+        """Get the color to draw a zone with.
+
+        Rainbow zones cycle through RAINBOW over time. Unknown colors use
+        DEFAULT_ZONE_COLOR.
+
+        Args:
+            zone: The zone to color.
+
+        Returns:
+            The RGB color of the zone.
+        """
         if zone.color == "rainbow":
             return RAINBOW[(pygame.time.get_ticks() // 300) % len(RAINBOW)]
         return COLORS.get(zone.color or "", DEFAULT_ZONE_COLOR)
 
     def _build_glow(self) -> pygame.Surface:
+        """Build the see-through glow drawn around moving drones.
+
+        Returns:
+            A surface with three faded circles in the drone color.
+        """
         glow = pygame.Surface((GLOW_RADIUS * 2, GLOW_RADIUS * 2),
                               pygame.SRCALPHA)
         r, g, b = self.theme.drone_led
@@ -348,6 +483,13 @@ class Visualizer:
         return glow
 
     def _build_background(self) -> pygame.Surface:
+        """Build the window background from the current theme's texture.
+
+        COLUMNS uses a fixed random seed so it looks the same every time.
+
+        Returns:
+            A window-sized surface with the background and its texture.
+        """
         bg = pygame.Surface((WIDTH, HEIGHT))
         bg.fill(self.theme.background)
         match self.theme.texture:
@@ -394,12 +536,22 @@ class Visualizer:
 
     @staticmethod
     def _shade(rgb: RGB, factor: float) -> RGB:
+        """Make a color darker or lighter.
+
+        Args:
+            rgb: The color to change.
+            factor: Below 1 darkens, above 1 lightens.
+
+        Returns:
+            The new color, capped at 255 per channel.
+        """
         r, g, b = rgb
         return (min(255, int(r * factor)),
                 min(255, int(g * factor)),
                 min(255, int(b * factor)))
 
     def _apply_theme(self) -> None:
+        """Switch to the current theme and rebuild the background and glow."""
         self.theme = THEMES[self.theme_index]
         self.background = self._build_background()
         self.glow = self._build_glow()

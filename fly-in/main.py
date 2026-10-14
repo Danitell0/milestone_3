@@ -31,14 +31,14 @@ def main() -> None:
     try:
         args = parse_args()
         parser = MapParser(args.map_path)
-        net = parser.read_map()
-        distances = PathFinder(net).compute_distances()
-        simulation = Simulation(net, distances)
-        printer = ColorPrinter()
 
         if args.visual:
             Visualizer(Path(args.map_path)).run()
         else:
+            net = parser.read_map()
+            distances = PathFinder(net).compute_distances()
+            simulation = Simulation(net, distances)
+            printer = ColorPrinter()
             while not simulation.is_finished():
                 if simulation.turn >= MAX_TURNS:
                     raise FlyInError("Simulation did not finish.")

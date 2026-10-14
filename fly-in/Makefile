@@ -9,11 +9,19 @@ UV = uv
 PY = $(UV) run python3
 MAP = maps/easy/01_linear_path.txt
 
-.PHONY: help install run debug clean lint lint-strict
+.PHONY: help install run debug clean lint lint-strict visual
 
 # Commands -------
 
 help:
+	@echo "$(YELLOW)Available Commands:$(RESET)"
+	@echo "$(GREEN)  install	->$(RESET) Sync the virtual environment from uv.lock"
+	@echo "$(GREEN)  run		->$(RESET) Run the pipeline (Default easy map)"
+	@echo "$(GREEN)  debug		->$(RESET) Run the pipeline with pdb"
+	@echo "$(GREEN)  clean		->$(RESET) Remove caches and ignored files"
+	@echo "$(GREEN)  lint		->$(RESET) Run flake8 + mypy with required flags"
+	@echo "$(GREEN)  lint-strict	->$(RESET) Run mypy --strict"
+	@echo "$(GREEN)  visual	->$(RESET) Run the program with pygame visuals"
 
 install:
 	$(UV) sync
@@ -35,7 +43,7 @@ clean:
 	@rm -rf .mypy_cache .pytest_cache .ruff_cache
 
 lint:
-	@$(UV) run flake8 . --exclude=venv,.venv
+	@$(UV) run flake8 . --exclude=venv,.venv 
 	@echo "flake8... $(GREEN)Success.$(RESET)"
 	@$(UV) run mypy . --warn-return-any --warn-unused-ignores --ignore-missing-imports \
 		--disallow-untyped-defs --check-untyped-defs
@@ -44,3 +52,7 @@ lint:
 lint-strict:
 	@$(UV) run mypy . --strict
 	@echo "mypy --strict... $(GREEN)Success.$(RESET)"
+
+visual:
+	@echo "$(GREEN)Running program in Visual Mode.$(RESET)"
+	@$(PY) main.py $(MAP) --visual
